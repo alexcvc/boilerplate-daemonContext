@@ -1,14 +1,11 @@
-/* SPDX-License-Identifier: NLPL */
-// NO LIMIT PUBLIC LICENSE
-// Version 0, June 2012
+/* SPDX-License-Identifier: MIT */
 //
-// Alexander Sacharov <a.sacharov@gmx.de> 2024
+// Copyright (c) 2024 Alexander Sacharov <a.sacharov@gmx.de>
+//               All rights reserved.
 //
-//                  NO LIMIT PUBLIC LICENSE
-// Terms and conditions for copying, distribution, modification
-// or anything else.
+// This work is licensed under the terms of the MIT license.
+// For a copy, see <https://opensource.org/licenses/MIT>.
 //
-// 0. No limit to do anything with this work and this license.
 
 /*************************************************************************/ /**
  * \file
