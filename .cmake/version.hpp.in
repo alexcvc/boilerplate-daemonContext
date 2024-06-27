@@ -2,10 +2,11 @@
 
 #include <string>
 
+namespace version {
 /**
  * Structure of the version for the project based on the template in cmake project
  */
-class Version_@PROJECT_NAME@ {
+class @PROJECT_NAME@ {
  public:
   /// obtains version as string with or without git-hash from cmake project
   /// \param withGitHash - with git-hash
@@ -75,10 +76,11 @@ class Version_@PROJECT_NAME@ {
   inline static int _minor{@PROJECT_VERSION_MINOR@};                           ///< Second version number
   inline static int _patch{@PROJECT_VERSION_PATCH@};                           ///< Third version number
   inline static int _tweak{@PROJECT_VERSION_TWEAK@};                           ///< Fourth version number
-  inline static const std::string _git_hash{"@GIT_HASH@"};    ///< git HEAD revision
-  inline static const std::string _git_date{@GIT_DATE@};    ///< git HEAD data
-  inline static const std::string _name{"@PROJECT_NAME@"};         ///< project name
-  inline static const std::string _desc{"@PROJECT_DESCRIPTION@"};  ///< Short description
+  inline static const std::string _git_hash{"@GIT_HASH@"};                     ///< git HEAD revision
+  inline static const std::string _git_date{@GIT_DATE@};                       ///< git HEAD data
+  inline static const std::string _name{"@PROJECT_NAME@"};                     ///< project name
+  inline static const std::string _desc{"@PROJECT_DESCRIPTION@"};              ///< Short description
   inline static const std::string _summary{"@PROJECT_VERSION_DESCRIPTION@"};   ///< version summary description
 };
+} // end of Version{}
 

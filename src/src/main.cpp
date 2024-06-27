@@ -59,7 +59,7 @@ struct DaemonConfig {
  * @return None
  */
 static void show_version(const char* prog) {
-  auto verString = Version_daemon_cpp_boilerplate::getVersion(true);
+  auto verString = version::daemon_cpp_boilerplate::getVersion(true);
   // info
   std::cout << prog << " v." << verString << std::endl;
 }

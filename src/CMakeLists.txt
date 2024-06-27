@@ -1,16 +1,6 @@
 ### Set project name
 set(TargetName boilerplate)
 
-# Set the PROJECT_NAME, PROJECT_VERSION as well as other variable
-project(${TargetName}
-        VERSION 1.0.0
-        DESCRIPTION "Boilerplate for base C++ application"
-        LANGUAGES CXX C
-)
-
-### set readable summary for this version
-set(PROJECT_VERSION_DESCRIPTION "Boilerplate C++ application for base project")
-
 ### List of CPP (source) library files.
 set(${TargetName}_SRC
         "src/daemon.cpp"
