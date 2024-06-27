@@ -30,7 +30,7 @@
 //----------------------------------------------------------------------------
 namespace app {
 class Daemon {
-public:
+ public:
   /**
    * @brief The state of the daemon.
    */
@@ -39,9 +39,9 @@ public:
   /**
    * @brief Signals to exit the daemon.
    */
-  static constexpr int ExitSignal = SIGINT; ///< Signal to exit the daemon
-  static constexpr int TerminateSignal = SIGTERM; ///< Signal to terminate the daemon
-  static constexpr int ReloadSignal = SIGHUP; ///< Signal to reload the daemon
+  static constexpr int ExitSignal = SIGINT;         ///< Signal to exit the daemon
+  static constexpr int TerminateSignal = SIGTERM;   ///< Signal to terminate the daemon
+  static constexpr int ReloadSignal = SIGHUP;       ///< Signal to reload the daemon
 
   /**
    * @brief Gets the instance of the daemon.
@@ -132,7 +132,7 @@ public:
    */
   std::optional<bool> make_daemon(const std::string& pid_file_name);
 
-private:
+ private:
   Daemon();
   Daemon(Daemon const&) = delete;
   void operator=(Daemon const&) = delete;
@@ -174,11 +174,10 @@ private:
   bool write_pid_to_file(const std::string& pid_file_name);
 
   // Member variables
-  State m_state; ///< State of the daemon
-  std::function<std::optional<bool>()> m_handlerBeforeToStart; ///< Function to be called before the daemon starts
-  std::function<std::optional<bool>()> m_handlerReload; ///< Function to be called when the daemon is reloaded
-  std::function<std::optional<bool>()> m_handlerBeforeToExit; ///< Function to be called before the daemon exits
-
+  State m_state;                                                 ///< State of the daemon
+  std::function<std::optional<bool>()> m_handlerBeforeToStart;   ///< Function to be called before the daemon starts
+  std::function<std::optional<bool>()> m_handlerReload;          ///< Function to be called when the daemon is reloaded
+  std::function<std::optional<bool>()> m_handlerBeforeToExit;    ///< Function to be called before the daemon exits
 };
 
-} // namespace app
+}   // namespace app

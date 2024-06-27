@@ -59,7 +59,7 @@ void app::Daemon::signal_handler(int signal) {
  * @return The process ID of the child process. Returns -1 if the fork operation fails.
  */
 pid_t app::Daemon::create_child_process() {
-  pid_t pid = fork(); // create new process
+  pid_t pid = fork();   // create new process
   if (pid < 0) {
     // print error message and return -1 if fork failed
     perror("Can't fork first child");
