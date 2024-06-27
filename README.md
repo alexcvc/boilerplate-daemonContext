@@ -15,7 +15,7 @@ In the TODO plan there are followings:
 1) Examples of using and extending this boilerplate for a real application with a separate implementation of an independent application context;
 2) secure use in multithreaded applications;
 3) application restart without stop and start daemon. 
-4) examples an abstract context application for IEC61850, IE60870-5-10X protocol converter;
+4) examples an abstract context application for protocol converter f.e. IEC61850, IE60870-5-10X;
 5) examples of how to use these code in IoT applications with Raspberry and BeagleBoard.
 
 You can use and modify these sources in your application as needed and desired.
