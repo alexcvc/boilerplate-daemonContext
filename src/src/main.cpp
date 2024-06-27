@@ -21,6 +21,7 @@
 #include <iostream>
 #include <thread>
 
+#include "daemonConfig.hpp"
 #include "daemon.hpp"
 #include "version.hpp"
 
@@ -37,12 +38,6 @@ enum class handleConsoleType {
   abort,
   restart,
   reload,
-};
-
-struct DaemonConfig {
-  std::string pidFile;
-  bool isDaemon{false};
-  bool hasTestConsoleInForeground{false};
 };
 
 //----------------------------------------------------------------------------
@@ -73,15 +68,20 @@ static void display_help(const char* prog, char errorOption = 0) {
   if (errorOption != 0) {
     std::cerr << "Error in option: " << errorOption << "\n";
   }
-  std::cout << "Usage: " << prog << "[OPTION]" << std::endl
+  std::cout << "Usage: " << prog << " [OPTIONS]" << std::endl
             << "-D, --background         start as daemon" << std::endl
             << "-F, --foreground         start in foreground with test console" << std::endl
+            << "-S, --cfgpath            path to folder with configuration files" << std::endl
+            << "-x, --cfgfile            specified configuration file" << std::endl
             << "-P, --pidfile            create pid file" << std::endl
+            << "-L, --logfile            specified log file" << std::endl
             << "-v, --version            version" << std::endl
             << "-h, --help               this message" << std::endl;
   std::cout << "Sample command lines:" << std::endl;
   std::cout << prog << " -F" << std::endl;
   std::cout << prog << " -D -P /var/run/some.pid" << std::endl;
+  std::cout << prog << " -F -S /app/config" << std::endl;
+  std::cout << prog << " -D -x /app/config/settings.xml -P /var/run/some.pid" << std::endl;
 
   if (errorOption != 0) {
     exit(EXIT_FAILURE);
@@ -99,13 +99,20 @@ static void display_help(const char* prog, char errorOption = 0) {
  * @param argv The array of command line argument strings.
  * @param config
  */
-static void process_command_line(int argc, char* argv[], DaemonConfig& config) {
+static void process_command_line(int argc, char* argv[], app::DaemonConfig& config) {
   for (;;) {
     int option_index = 0;
-    static const char* short_options = "h?vDFP:";
+    static const char* short_options = "h?vDFP:S:x:L:";
     static const struct option long_options[] = {
-       {"help", no_argument, 0, 0},         {"version", no_argument, 0, 'v'},       {"background", no_argument, 0, 'D'},
-       {"foreground", no_argument, 0, 'F'}, {"pidfile", required_argument, 0, 'P'}, {0, 0, 0, 0},
+      {"help", no_argument, 0, 0},
+      {"version", no_argument, 0, 'v'},
+      {"background", no_argument, 0, 'D'},
+      {"foreground", no_argument, 0, 'F'},
+      {"pidfile", required_argument, 0, 'P'},
+      {"cfgpath", required_argument, 0, 'S'},
+      {"cfgfile", required_argument, 0, 'x'},
+      {"logfile", required_argument, 0, 'L'},
+      {0, 0, 0, 0},
     };
 
     int var = getopt_long(argc, argv, short_options, long_options, &option_index);
@@ -145,7 +152,31 @@ static void process_command_line(int argc, char* argv[], DaemonConfig& config) {
         } else {
           display_help(argv[0], var);
         }
-        break;
+      break;
+
+      case 'S':
+        if (strlen(optarg)) {
+          config.pathConfigFolder.assign(optarg);
+        } else {
+          display_help(argv[0], var);
+        }
+      break;
+
+      case 'L':
+        if (strlen(optarg)) {
+          config.logFile.assign(optarg);
+        } else {
+          display_help(argv[0], var);
+        }
+      break;
+
+      case 'x':
+        if (strlen(optarg)) {
+          config.configFile.assign(optarg);
+        } else {
+          display_help(argv[0], var);
+        }
+      break;
 
       default: {
         display_help(argv[0]);
@@ -188,7 +219,7 @@ handleConsoleType handle_console() {
 int main(int argc, char** argv) {
   // The Daemon class is a singleton to avoid be instantiated more than once
   app::Daemon& daemon = app::Daemon::instance();
-  DaemonConfig config;
+  app::DaemonConfig config;
 
   //----------------------------------------------------------
   // parse parameters

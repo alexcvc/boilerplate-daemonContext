@@ -10,6 +10,7 @@ set(${TargetName}_SRC
 ### List of HPP (header) library files.
 set(${TargetName}_HDR
         "include/daemon.hpp"
+        "include/daemonConfig.hpp"
 )
 
 ### add executable
@@ -25,9 +26,8 @@ target_include_directories(${TargetName} PRIVATE
         "include"
 )
 
-target_link_libraries(${TargetName} PRIVATE
-        fmt
-)
+find_package(fmt)
+target_link_libraries(${TargetName} PRIVATE fmt::fmt-header-only)
 
 # post build copy optional
 if ((NOT ${CMAKE_POSTBUILD_OUTPUT_DIRECTORY}) AND (IS_DIRECTORY ${CMAKE_POSTBUILD_OUTPUT_DIRECTORY}))
