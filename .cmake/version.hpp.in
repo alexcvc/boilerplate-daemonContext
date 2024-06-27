@@ -5,7 +5,7 @@
 /**
  * Structure of the version for the project based on the template in cmake project
  */
-class @PROJECT_NAME@_Version {
+class Version_@PROJECT_NAME@ {
  public:
   /// obtains version as string with or without git-hash from cmake project
   /// \param withGitHash - with git-hash

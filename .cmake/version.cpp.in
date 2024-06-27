@@ -6,7 +6,7 @@
 
 #include <fmt/format.h>
 
-std::string @PROJECT_NAME@_Version::getVersion(bool withGitHash) {
+std::string Version_@PROJECT_NAME@::getVersion(bool withGitHash) {
   auto outstr{fmt::format("{:d}.{:d}.{:d}", _major, _minor, _patch)};
 
   if (_tweak > 0)
@@ -18,7 +18,7 @@ std::string @PROJECT_NAME@_Version::getVersion(bool withGitHash) {
   return outstr;
 }
 
-std::string @PROJECT_NAME@_Version::getHeader(bool withGitHash) {
+std::string Version_@PROJECT_NAME@::getHeader(bool withGitHash) {
   return fmt::format(
       "Package   : {} {}\n"
       "Version   : {} {}\n"
