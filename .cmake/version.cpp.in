@@ -1,0 +1,27 @@
+/*************************************************************************/ /**
+ * @file
+ * @brief   Provides application version-info
+ *****************************************************************************/
+#include "version.hpp"
+
+#include <fmt/format.h>
+
+std::string @PROJECT_NAME@_Version::getVersion(bool withGitHash) {
+  auto outstr{fmt::format("{:d}.{:d}.{:d}", _major, _minor, _patch)};
+
+  if (_tweak > 0)
+    outstr.append(fmt::format(".{:d}", _tweak));
+
+  if (withGitHash && !_git_hash.empty())
+    outstr.append(fmt::format("-{}", _git_hash));
+
+  return outstr;
+}
+
+std::string @PROJECT_NAME@_Version::getHeader(bool withGitHash) {
+  return fmt::format(
+      "Package   : {} {}\n"
+      "Version   : {} {}\n"
+      "Brief     : {}",
+      _name, _desc, getVersion(withGitHash), _git_date, _summary);
+}

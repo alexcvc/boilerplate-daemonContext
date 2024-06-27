@@ -1,0 +1,84 @@
+#pragma once
+
+#include <string>
+
+/**
+ * Structure of the version for the project based on the template in cmake project
+ */
+class @PROJECT_NAME@_Version {
+ public:
+  /// obtains version as string with or without git-hash from cmake project
+  /// \param withGitHash - with git-hash
+  /// \return string
+  static std::string getVersion(bool withGitHash);
+
+  /// full version information from cmake project
+  /// \return full header
+  static std::string getHeader(bool withGitHash);
+
+  /// project name from cmake project
+  /// \return project name
+  static const std::string& getName() {
+    return _name;
+  }
+
+  /// First version number
+  /// \return number
+  static int getMajor() {
+    return _major;
+  }
+
+  /// second version number
+  /// \return number
+  static int getMinor() {
+    return _minor;
+  }
+
+  /// third version number
+  /// \return number
+  static int getPatch() {
+    return _patch;
+  }
+
+  /// fourth version number
+  /// \return number
+  static int getTweak() {
+    return _tweak;
+  }
+
+  /// short git-hash
+  /// \return git-hash
+  static const std::string& getGitHash() {
+    return _git_hash;
+  }
+
+  /// short git-hash
+  /// \return git-hash
+  static const std::string& getGitDate() {
+    return _git_date;
+  }
+
+  /// project description from cmake project
+  /// \return project description
+  static const std::string& getDesc() {
+    return _desc;
+  }
+
+  /// summary version description from cmake project
+  /// \return summary version comments
+  static const std::string& getSummary() {
+    return _summary;
+  }
+
+ private:
+  inline static int _major{@PROJECT_VERSION_MAJOR@};                           ///< First version number
+  inline static int _minor{@PROJECT_VERSION_MINOR@};                           ///< Second version number
+  inline static int _patch{@PROJECT_VERSION_PATCH@};                           ///< Third version number
+  inline static int _tweak{@PROJECT_VERSION_TWEAK@};                           ///< Fourth version number
+  inline static const std::string _git_hash{"@GIT_HASH@"};    ///< git HEAD revision
+  inline static const std::string _git_date{@GIT_DATE@};    ///< git HEAD data
+  inline static const std::string _name{"@PROJECT_NAME@"};         ///< project name
+  inline static const std::string _desc{"@PROJECT_DESCRIPTION@"};  ///< Short description
+  inline static const std::string _summary{"@PROJECT_VERSION_DESCRIPTION@"};   ///< version summary description
+};
+
