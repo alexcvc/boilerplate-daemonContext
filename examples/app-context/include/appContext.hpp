@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "appContextBase.hpp"
 namespace app {
 
 /**
