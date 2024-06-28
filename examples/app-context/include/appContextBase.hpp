@@ -8,6 +8,9 @@
 //
 
 #pragma once
+#include <optional>
+
+#include "daemonConfig.hpp"
 
 //-----------------------------------------------------------------------------
 // includes
@@ -29,23 +32,20 @@ namespace app {
  * @brief The IAppContext class provides an abstract base class for application context.
  */
 class IAppContext {
-  // Private Variables
+// Private Variables
 
- public:
+public:
   /// constructor
   IAppContext() = default;
 
   /// destructor
-  ~IAppContext() = default;
+  virtual ~IAppContext() = default;
 
-  /// Copy constructor
-  IAppContext(const IAppContext& other) = delete;
+  [[nodiscard]] virtual std::optional<bool> check_configuration(const app::DaemonConfig& config) = 0;
 
-  /// Copy assignment operator
-  IAppContext& operator=(const IAppContext& other) = delete;
+  [[nodiscard]] virtual std::optional<bool> prepare_before_to_start() = 0;
 
-  /// alternatively, reuse destructor and copy ctor
-  IAppContext& operator=(IAppContext other) = delete;
+
 };
 
 }   // namespace app

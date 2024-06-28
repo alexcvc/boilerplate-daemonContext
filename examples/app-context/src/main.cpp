@@ -103,15 +103,15 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
     int option_index = 0;
     static const char* short_options = "h?vDFP:S:x:L:";
     static const struct option long_options[] = {
-      {"help", no_argument, nullptr, 0},
-      {"version", no_argument, nullptr, 'v'},
-      {"background", no_argument, nullptr, 'D'},
-      {"foreground", no_argument, nullptr, 'F'},
-      {"pidfile", required_argument, nullptr, 'P'},
-      {"cfgpath", required_argument, nullptr, 'S'},
-      {"cfgfile", required_argument, nullptr, 'x'},
-      {"logfile", required_argument, nullptr, 'L'},
-      {nullptr, 0, nullptr, 0},
+       {"help", no_argument, nullptr, 0},
+       {"version", no_argument, nullptr, 'v'},
+       {"background", no_argument, nullptr, 'D'},
+       {"foreground", no_argument, nullptr, 'F'},
+       {"pidfile", required_argument, nullptr, 'P'},
+       {"cfgpath", required_argument, nullptr, 'S'},
+       {"cfgfile", required_argument, nullptr, 'x'},
+       {"logfile", required_argument, nullptr, 'L'},
+       {nullptr, 0, nullptr, 0},
     };
 
     int var = getopt_long(argc, argv, short_options, long_options, &option_index);
@@ -151,7 +151,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         } else {
           display_help(argv[0], std::to_string(var));
         }
-      break;
+        break;
 
       case 'S':
         if (strlen(optarg)) {
@@ -159,7 +159,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         } else {
           display_help(argv[0], std::to_string(var));
         }
-      break;
+        break;
 
       case 'L':
         if (strlen(optarg)) {
@@ -167,7 +167,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         } else {
           display_help(argv[0], std::to_string(var));
         }
-      break;
+        break;
 
       case 'x':
         if (strlen(optarg)) {
@@ -175,7 +175,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         } else {
           display_help(argv[0], std::to_string(var));
         }
-      break;
+        break;
 
       default: {
         display_help(argv[0]);
@@ -210,14 +210,59 @@ handleConsoleType handle_console() {
 }
 
 /**
+ * @brief Subscriber main function
+ * @desc Threads cannot always actively monitor a stop token.
+ * @param lptr - log appender
+ * @param cfg_converter - configuration
+ * @param token - stop task token
+ */
+void TaskAppContextFunc(const svService::config::CConfiguration& cfg_converter,
+                          std::stop_token token) {
+  using namespace std::chrono_literals;
+  const auto waitDurationDef = 1000ms;
+
+  std::cout << "Start subscriber task" << std::endl;
+
+  // Register a stop callback
+  std::stop_callback stop_cb(token, [&]() {
+    // Wake thread on stop request
+    task_event_subscriber.event_condition.notify_all();
+  });
+
+  // create displacement context
+  svService::sub::SubscriberContext context(lptr, cfg_converter);
+  auto sooner = waitDurationDef;
+
+  while (true) {
+    // observe serves states
+    sooner = context.Serve(waitDurationDef);
+    if (sooner.count() > 0) {
+      // Start of locked block
+      std::unique_lock lck(task_event_subscriber.event_mutex);
+      task_event_subscriber.event_condition.wait_for(lck, std::chrono::milliseconds(sooner));
+    }
+
+    //Stop if requested to stop
+    if (token.stop_requested()) {
+      lptr->info("Stop requested for a subscriber task");
+      break;
+    }
+  }   // End of while loop
+
+  lptr->info("subscriber task stopped.");
+}
+
+/**
  * @file main.c
  * @brief This is the main entry point for the application.
  */
 int main(int argc, char** argv) {
   // The Daemon class is a singleton to avoid be instantiated more than once
   app::Daemon& daemon = app::Daemon::instance();
-  app::DaemonConfig config;
-  app::AppContext appContext;
+  app::DaemonConfig config;     ///< The configuration of the daemon
+  app::AppContext appContext;   ///< The application context
+  std::stop_source stop_src;    ///< stop token for the main loop
+  std::thread taskAppContext;
 
   //----------------------------------------------------------
   // parse parameters
@@ -225,10 +270,24 @@ int main(int argc, char** argv) {
   process_command_line(argc, argv, config);
 
   //----------------------------------------------------------
-  // parameters have been set
+  // Check integrity this configuration
   //----------------------------------------------------------
+  if (auto res = appContext.check_configuration(config); !res.has_value()) {
+    std::cerr << "configuration mismatch. Exit" << std::endl;
+    exit(EXIT_FAILURE);
+  }
 
-  // Set the start all function
+  //----------------------------------------------------------
+  // Prepare application to start
+  //----------------------------------------------------------
+  if (auto res = appContext.prepare_before_to_start(); !res.has_value()) {
+    std::cerr << "prepare the application for task start failed. Exit" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  //----------------------------------------------------------
+  // prepare daemon to start
+  //----------------------------------------------------------
   daemon.set_start_function([]() {
     std::cout << "Start all function called." << std::endl;
     return true;
@@ -261,6 +320,12 @@ int main(int argc, char** argv) {
     }
   }
 
+  //----------------------------------------------------------
+  // go to idle in main
+  //----------------------------------------------------------
+  // Create all workers and pass stop tokens
+  taskAppContext = std::move(std::thread(TaskAppContextFunc, appContext, config, stop_src.get_token()));
+
   if (config.hasTestConsoleInForeground) {
     std::cout << "Press the h key to display the Console Menu..." << std::endl;
   }
@@ -284,6 +349,15 @@ int main(int argc, char** argv) {
       std::this_thread::sleep_for(std::chrono::seconds(1));
     }
   }
+
+  // set token to stop all worker
+  stop_src.request_stop();
+
+  // wakeup all tasks
+  WakeUpRunningTasks(config);
+
+  // Join threads
+  taskAppContext.join();
 
   if (auto result = daemon.close_all(); result.has_value() && !result.value()) {
     std::cerr << "Error closing the daemon." << std::endl;
