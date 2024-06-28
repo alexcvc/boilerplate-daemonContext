@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.5)
 
 # Set the PROJECT_NAME, PROJECT_VERSION as well as other variable
 project(daemon_cpp_boilerplate
-        VERSION 1.0.0
-        DESCRIPTION "C++ daemon boilerplate"
-        LANGUAGES CXX C
+   VERSION 1.0.0
+   DESCRIPTION "C++ daemon boilerplate"
+   LANGUAGES CXX C
 )
 
 ### set readable summary for this version
@@ -13,6 +13,7 @@ set(PROJECT_VERSION_DESCRIPTION "Test and probes upgrade to ed2-1 and new stack 
 ### Options
 option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" OFF)
 option(BUILD_DOC "Build documentation" OFF)
+option(BUILD_EXAMPLES "Build examples" ON)
 option(BUILD_TEST "Build test-applications" OFF)
 
 # Defines the CMAKE_INSTALL_LIBDIR, CMAKE_INSTALL_BINDIR and many other useful macros.
@@ -46,7 +47,7 @@ find_package(Threads REQUIRED)
 
 # Build debug-configuration by default
 if (NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+   set(CMAKE_BUILD_TYPE Debug)
 endif ()
 
 # Strip everything
@@ -57,11 +58,11 @@ add_link_options($<$<CONFIG:RELEASE>:-s>)
 #######################################################
 # version handling
 execute_process(
-        COMMAND
-        git rev-parse --short HEAD
-        OUTPUT_VARIABLE
-        GIT_HASH
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+   COMMAND
+   git rev-parse --short HEAD
+   OUTPUT_VARIABLE
+   GIT_HASH
+   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 #######################################################
 ### Version handling
@@ -79,14 +80,25 @@ configure_file("${CMAKE_SOURCE_DIR}/.cmake/version.hpp.in" "${CMAKE_BINARY_DIR}/
 #######################################################
 
 ### application.
+set(SPDLOG_FMT_EXTERNAL_HO TRUE)
+set(SPDLOG_BUILD_SHARED TRUE)
+
+add_subdirectory(submodules)
+
+### application.
 add_subdirectory(src)
+
+### examples.
+if (BUILD_EXAMPLES)
+   add_subdirectory(examples)
+endif ()
 
 # Check if we need to build the tests
 if (BUILD_TEST)
-    add_subdirectory(test)
+   add_subdirectory(test)
 endif ()
 
 # Add targets related to doxygen documentation generation
 if (BUILD_DOC)
-    add_subdirectory(docs)
+   add_subdirectory(docs)
 endif ()
