@@ -1,0 +1,183 @@
+/* SPDX-License-Identifier: MIT */
+//
+// Copyright (c) 2024 Alexander Sacharov <a.sacharov@gmx.de>
+//               All rights reserved.
+//
+// This work is licensed under the terms of the MIT license.
+// For a copy, see <https://opensource.org/licenses/MIT>.
+//
+
+/*************************************************************************/ /**
+ * \file
+ * \brief   contains the daemon class
+ * \author  Alexander Sacharov
+ * \date    2024-06-26
+ * \ingroup
+ *****************************************************************************/
+
+#pragma once
+
+//-----------------------------------------------------------------------------
+// includes
+//-----------------------------------------------------------------------------
+#include <csignal>
+#include <functional>
+#include <optional>
+#include <string>
+
+//----------------------------------------------------------------------------
+// Declarations
+//----------------------------------------------------------------------------
+namespace app {
+class Daemon {
+ public:
+  /**
+   * @brief The state of the daemon.
+   */
+  enum class State { start, running, reload, stop };
+
+  /**
+   * @brief Signals to exit the daemon.
+   */
+  static constexpr int ExitSignal = SIGINT;         ///< Signal to exit the daemon
+  static constexpr int TerminateSignal = SIGTERM;   ///< Signal to terminate the daemon
+  static constexpr int ReloadSignal = SIGHUP;       ///< Signal to reload the daemon
+
+  /**
+   * @brief Gets the instance of the daemon.
+   * @return The instance of the daemon.
+   */
+  static Daemon& instance() {
+    static Daemon instance;
+    return instance;
+  }
+
+  /**
+   * @brief Starts the daemon.
+   * @return True if the daemon is started, false otherwise.
+   */
+  [[nodiscard]] std::optional<bool> start_all() {
+    m_state = State::running;
+    if (m_handlerBeforeToStart) {
+      return m_handlerBeforeToStart();
+    }
+    return std::nullopt;
+  }
+
+  /**
+   * @brief Reloads the daemon.
+   * @return True if the daemon is reloaded, false otherwise.
+   */
+  [[nodiscard]] std::optional<bool> reload_all() {
+    m_state = State::reload;
+    return std::nullopt;
+  }
+
+  /**
+   * @brief Closes the daemon.
+   * @return True if the daemon is closed, false otherwise.
+   */
+  [[nodiscard]] std::optional<bool> close_all() {
+    m_state = State::stop;
+    if (m_handlerBeforeToExit) {
+      return m_handlerBeforeToExit();
+    }
+    return std::nullopt;
+  }
+
+  /**
+   * @brief Sets the function to be called before the daemon starts.
+   * @param func The function to be called.
+   */
+  void set_start_function(std::function<std::optional<bool>()> func) { m_handlerBeforeToStart = func; }
+
+  /**
+   * @brief Sets the function to be called when reloaded.
+   * @param func The function to be called.
+   */
+  void set_reload_function(std::function<std::optional<bool>()> func) { m_handlerReload = func; }
+
+  /**
+   * @brief Sets the function to be called before exits.
+   * @param func The function to be called.
+   */
+  void set_close_function(std::function<std::optional<bool>()> func) { m_handlerBeforeToExit = func; }
+
+  /**
+   * @brief Checks if the daemon is running.
+   * @return True if the daemon is running, false otherwise.
+   */
+  [[nodiscard]] bool is_running() {
+    if (m_state == State::reload) {
+      perform_reload_if_required();
+    }
+    return m_state == State::running;
+  }
+
+  /**
+   * @brief Gets the state of the daemon.
+   * @return The state of the daemon.
+   */
+  [[nodiscard]] State get_state() const { return m_state; }
+
+  /**
+   * @brief Sets the state of the daemon.
+   * @param stop The state to be set.
+   */
+  void set_state(State stop) { m_state = stop; }
+
+  /**
+   * @brief Makes process as daemon in background.
+   * @param name of the PID file.
+   */
+  std::optional<bool> make_daemon(const std::string& pid_file_name);
+
+ private:
+  Daemon();
+  Daemon(Daemon const&) = delete;
+  void operator=(Daemon const&) = delete;
+
+  /**
+   * @brief Performs the reload if required.
+   */
+  void perform_reload_if_required() {
+    m_state = State::running;
+    if (m_handlerReload) {
+      if (m_handlerReload() == false) {
+        m_state = State::stop;
+      }
+    }
+  }
+
+  /**
+   * @brief Handles the signals.
+   * @param signal The signal to be handled.
+   */
+  static void signal_handler(int signal);
+
+  /**
+   * @brief Creates a child process.
+   * @return The process ID of the child process.
+   */
+  pid_t create_child_process();
+
+  /**
+   * @brief Initializes the child process.
+   */
+  void init_child_process();
+
+  /**
+   * @brief Writes the process ID to a file.
+   * @param pid_file_name The name of the PID file.
+   * @return True if the process ID is written to the file, false otherwise.
+   */
+  bool write_pid_to_file(const std::string& pid_file_name);
+
+  // Member variables
+  State m_state;                                                 ///< State of the daemon
+  std::function<std::optional<bool>()> m_handlerBeforeToStart;   ///< Function to be called before the daemon starts
+  std::function<std::optional<bool>()> m_handlerReload;          ///< Function to be called when the daemon is reloaded
+  std::function<std::optional<bool>()> m_handlerBeforeToExit;    ///< Function to be called before the daemon exits
+};
+
+}   // namespace app

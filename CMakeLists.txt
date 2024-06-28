@@ -81,6 +81,9 @@ configure_file("${CMAKE_SOURCE_DIR}/.cmake/version.hpp.in" "${CMAKE_BINARY_DIR}/
 ### application.
 add_subdirectory(src)
 
+### examples.
+add_subdirectory(examples)
+
 # Check if we need to build the tests
 if (BUILD_TEST)
     add_subdirectory(test)
