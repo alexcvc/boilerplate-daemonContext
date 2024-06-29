@@ -19,6 +19,7 @@ find_package(fmt REQUIRED)
 
 ### List of CPP (source) library files.
 set(${TargetName}_SRC
+   "src/appContext.cpp"
    "src/daemon.cpp"
    "src/main.cpp"
 )

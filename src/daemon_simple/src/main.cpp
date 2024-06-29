@@ -21,9 +21,8 @@
 #include <iostream>
 #include <thread>
 
-#include "appContext.hpp"
-#include "daemon.hpp"
 #include "daemonConfig.hpp"
+#include "daemon.hpp"
 #include "version.hpp"
 
 //----------------------------------------------------------------------------
@@ -35,8 +34,10 @@
 //----------------------------------------------------------------------------
 enum class handleConsoleType {
   none,
-  reload,
   exit,
+  abort,
+  restart,
+  reload,
 };
 
 //----------------------------------------------------------------------------
@@ -53,7 +54,7 @@ enum class handleConsoleType {
  * @return None
  */
 static void show_version(const char* prog) {
-  auto verString = version::daemon_with_context::getVersion(true);
+  auto verString = version::daemon_simple::getVersion(true);
   // info
   std::cout << prog << " v." << verString << std::endl;
 }
@@ -63,8 +64,8 @@ static void show_version(const char* prog) {
  * @param prog The name of the program.
  * @param var The character representing the option with an error. Defaults to 0.
  */
-static void display_help(const char* prog, std::string_view errorOption = "") {
-  if (!errorOption.empty()) {
+static void display_help(const char* prog, char errorOption = 0) {
+  if (errorOption != 0) {
     std::cerr << "Error in option: " << errorOption << "\n";
   }
   std::cout << "Usage: " << prog << " [OPTIONS]" << std::endl
@@ -82,7 +83,7 @@ static void display_help(const char* prog, std::string_view errorOption = "") {
   std::cout << prog << " -F -S /app/config" << std::endl;
   std::cout << prog << " -D -x /app/config/settings.xml -P /var/run/some.pid" << std::endl;
 
-  if (!errorOption.empty()) {
+  if (errorOption != 0) {
     exit(EXIT_FAILURE);
   }
 }
@@ -103,15 +104,15 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
     int option_index = 0;
     static const char* short_options = "h?vDFP:S:x:L:";
     static const struct option long_options[] = {
-      {"help", no_argument, nullptr, 0},
-      {"version", no_argument, nullptr, 'v'},
-      {"background", no_argument, nullptr, 'D'},
-      {"foreground", no_argument, nullptr, 'F'},
-      {"pidfile", required_argument, nullptr, 'P'},
-      {"cfgpath", required_argument, nullptr, 'S'},
-      {"cfgfile", required_argument, nullptr, 'x'},
-      {"logfile", required_argument, nullptr, 'L'},
-      {nullptr, 0, nullptr, 0},
+      {"help", no_argument, 0, 0},
+      {"version", no_argument, 0, 'v'},
+      {"background", no_argument, 0, 'D'},
+      {"foreground", no_argument, 0, 'F'},
+      {"pidfile", required_argument, 0, 'P'},
+      {"cfgpath", required_argument, 0, 'S'},
+      {"cfgfile", required_argument, 0, 'x'},
+      {"logfile", required_argument, 0, 'L'},
+      {0, 0, 0, 0},
     };
 
     int var = getopt_long(argc, argv, short_options, long_options, &option_index);
@@ -149,7 +150,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         if (strlen(optarg)) {
           config.pidFile.assign(optarg);
         } else {
-          display_help(argv[0], std::to_string(var));
+          display_help(argv[0], var);
         }
       break;
 
@@ -157,7 +158,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         if (strlen(optarg)) {
           config.pathConfigFolder.assign(optarg);
         } else {
-          display_help(argv[0], std::to_string(var));
+          display_help(argv[0], var);
         }
       break;
 
@@ -165,7 +166,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         if (strlen(optarg)) {
           config.logFile.assign(optarg);
         } else {
-          display_help(argv[0], std::to_string(var));
+          display_help(argv[0], var);
         }
       break;
 
@@ -173,7 +174,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         if (strlen(optarg)) {
           config.configFile.assign(optarg);
         } else {
-          display_help(argv[0], std::to_string(var));
+          display_help(argv[0], var);
         }
       break;
 
@@ -188,19 +189,21 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
 handleConsoleType handle_console() {
   auto key = getchar();
   switch (key) {
+    case 'a':
+      return handleConsoleType::abort;
     case 'q':
       return handleConsoleType::exit;
     case 'R':
+      return handleConsoleType::restart;
+    case 'r':
       return handleConsoleType::reload;
-    case 'v':
-      // info
-      std::cout << " v." << version::daemon_with_context::getVersion(true) << std::endl;
-      break;
     case '?':
     case 'h':
       fprintf(stderr, "Application test console:\n");
-      fprintf(stderr, " R   -  execute reload functions\n");
+      fprintf(stderr, " r   -  reload debug settings\n");
+      fprintf(stderr, " R   -  reload application\n");
       fprintf(stderr, " q   -  quit from application.\n");
+      fprintf(stderr, " a   -  abort application.\n");
       fprintf(stderr, " v   -  version\n");
       fprintf(stderr, " h|? -  this information.\n");
       break;
@@ -217,7 +220,6 @@ int main(int argc, char** argv) {
   // The Daemon class is a singleton to avoid be instantiated more than once
   app::Daemon& daemon = app::Daemon::instance();
   app::DaemonConfig config;
-  app::AppContext appContext;
 
   //----------------------------------------------------------
   // parse parameters
@@ -234,7 +236,7 @@ int main(int argc, char** argv) {
     return true;
   });
 
-  // Set the stop all function
+  // Set the stop all all function
   daemon.set_close_function([]() {
     std::cout << "Close all function called." << std::endl;
     return true;
@@ -273,10 +275,15 @@ int main(int argc, char** argv) {
         case handleConsoleType::exit:
           daemon.set_state(app::Daemon::State::stop);
           break;
+        case handleConsoleType::abort:
+          daemon.set_state(app::Daemon::State::stop);
+          break;
+        case handleConsoleType::restart:
+          daemon.set_state(app::Daemon::State::reload);
+          break;
         case handleConsoleType::reload:
           daemon.set_state(app::Daemon::State::reload);
           break;
-        case handleConsoleType::none:
         default:
           break;
       }

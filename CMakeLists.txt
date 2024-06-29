@@ -13,7 +13,6 @@ set(PROJECT_VERSION_DESCRIPTION "Test and probes upgrade to ed2-1 and new stack 
 ### Options
 option(BUILD_SHARED_LIBS "Build libraries as shared as opposed to static" OFF)
 option(BUILD_DOC "Build documentation" OFF)
-option(BUILD_EXAMPLES "Build examples" ON)
 option(BUILD_TEST "Build test-applications" OFF)
 
 # Defines the CMAKE_INSTALL_LIBDIR, CMAKE_INSTALL_BINDIR and many other useful macros.
@@ -79,7 +78,7 @@ configure_file("${CMAKE_SOURCE_DIR}/.cmake/version.hpp.in" "${CMAKE_BINARY_DIR}/
 ### Add subdirectories
 #######################################################
 
-### application.
+### submodules
 set(SPDLOG_FMT_EXTERNAL_HO TRUE)
 set(SPDLOG_BUILD_SHARED TRUE)
 
@@ -87,11 +86,6 @@ add_subdirectory(submodules)
 
 ### application.
 add_subdirectory(src)
-
-### examples.
-if (BUILD_EXAMPLES)
-   add_subdirectory(examples)
-endif ()
 
 # Check if we need to build the tests
 if (BUILD_TEST)
