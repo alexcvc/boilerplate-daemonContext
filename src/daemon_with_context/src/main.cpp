@@ -50,6 +50,42 @@ struct DaemonEvent {
 
 static DaemonEvent daemon_event;
 
+/**
+ * @brief The options for the program.
+ */
+static const std::array<std::string_view, 8> OPTIONS = {
+    "  -D, --background         start as daemon\n",
+    "  -F, --foreground         start in foreground with test console\n",
+    "  -S, --cfgpath            path to folder with configuration files\n",
+    "  -x, --cfgfile            specified configuration file\n",
+    "  -P, --pidfile            create pid file\n",
+    "  -L, --logfile            specified log file\n",
+    "  -v, --version            version\n",
+    "  -h, --help               this message\n"};
+
+/**
+ *  @brief The help options for the program.
+ */
+static const char* help_options = "h?vDFP:S:x:L:";
+static const struct option long_options[] = {
+    {"help", no_argument, nullptr, 0},
+    {"version", no_argument, nullptr, 'v'},
+    {"background", no_argument, nullptr, 'D'},
+    {"foreground", no_argument, nullptr, 'F'},
+    {"pidfile", required_argument, nullptr, 'P'},
+    {"cfgpath", required_argument, nullptr, 'S'},
+    {"cfgfile", required_argument, nullptr, 'x'},
+    {"logfile", required_argument, nullptr, 'L'},
+    {nullptr, 0, nullptr, 0},
+};
+
+/**
+ * @brief The sample command lines for the program.
+ */
+static const std::array<std::string_view, 4> SAMPLE_COMMANDS = {
+    " -F\n", " -D -P /var/run/some.pid\n", " -F -S /app/config\n",
+    " -D -x /app/config/settings.xml -P /var/run/some.pid\n"};
+
 //----------------------------------------------------------------------------
 // Prototypes
 //----------------------------------------------------------------------------
@@ -57,6 +93,18 @@ static DaemonEvent daemon_event;
 //----------------------------------------------------------------------------
 // Declarations
 //----------------------------------------------------------------------------
+
+/*************************************************************************/ /**
+ * @brief Prints the sample command lines for the program.
+ * @param programName The name of the program.
+ * @return None
+ *****************************************************************************/
+static void print_sample_commands(const char* programName) {
+  std::cout << "\nSample command lines:" << std::endl;
+  for (const auto& cmd : SAMPLE_COMMANDS) {
+    std::cout << programName << cmd;
+  }
+}
 
 /***************************************************************************/ /**
  * @brief Displays the version information of the program.
@@ -71,31 +119,36 @@ static void show_version(const char* prog) {
 
 /*************************************************************************/ /**
  * Displays the help message for the program.
- * @param prog The name of the program.
+ * @param programName The name of the program.
  * @param var The character representing the option with an error. Defaults to 0.
  *****************************************************************************/
-static void display_help(const char* prog, std::string_view errorOption = "") {
+static void display_help(const char* programName, std::string_view errorOption = "") {
   if (!errorOption.empty()) {
     std::cerr << "Error in option: " << errorOption << "\n";
   }
-  std::cout << "\nUsage: " << prog << " [OPTIONS]\n"
-            << std::endl
-            << "  -D, --background         start as daemon" << std::endl
-            << "  -F, --foreground         start in foreground with test console" << std::endl
-            << "  -S, --cfgpath            path to folder with configuration files" << std::endl
-            << "  -x, --cfgfile            specified configuration file" << std::endl
-            << "  -P, --pidfile            create pid file" << std::endl
-            << "  -L, --logfile            specified log file" << std::endl
-            << "  -v, --version            version" << std::endl
-            << "  -h, --help               this message" << std::endl;
-  std::cout << "\nSample command lines:\n" << std::endl;
-  std::cout << prog << " -F" << std::endl;
-  std::cout << prog << " -D -P /var/run/some.pid" << std::endl;
-  std::cout << prog << " -F -S /app/config" << std::endl;
-  std::cout << prog << " -D -x /app/config/settings.xml -P /var/run/some.pid" << std::endl;
+  std::cout << "\nUsage: " << programName << " [OPTIONS]\n" << std::endl;
+  for (const auto& option : OPTIONS) {
+    std::cout << option;
+  }
+  // output sample commands
+  print_sample_commands(programName);
 
   if (!errorOption.empty()) {
     exit(EXIT_FAILURE);
+  }
+}
+
+/*************************************************************************/ /**
+ * @brief Handles the argument for a given option.
+ * @param option The option for which the argument is provided.
+ * @param argument The argument provided for the option.
+ * @param argv0 The name of the program.
+ * @return None
+ ****************************************************************************/
+void handle_option_argument(const char* option, const char* argument, const char* argv0) {
+  if (!strlen(argument)) {
+    std::cerr << "Missing " << option << " argument for option\n";
+    display_help(argv0);
   }
 }
 
@@ -111,41 +164,26 @@ static void display_help(const char* prog, std::string_view errorOption = "") {
  * @param config
  *****************************************************************************/
 static void process_command_line(int argc, char* argv[], app::DaemonConfig& config) {
+  int option_index = 0;
   for (;;) {
-    int option_index = 0;
-    static const char* short_options = "h?vDFP:S:x:L:";
-    static const struct option long_options[] = {
-        {"help", no_argument, nullptr, 0},
-        {"version", no_argument, nullptr, 'v'},
-        {"background", no_argument, nullptr, 'D'},
-        {"foreground", no_argument, nullptr, 'F'},
-        {"pidfile", required_argument, nullptr, 'P'},
-        {"cfgpath", required_argument, nullptr, 'S'},
-        {"cfgfile", required_argument, nullptr, 'x'},
-        {"logfile", required_argument, nullptr, 'L'},
-        {nullptr, 0, nullptr, 0},
-    };
-
-    int var = getopt_long(argc, argv, short_options, long_options, &option_index);
-
-    if (var == EOF) {
+    int current_option = getopt_long(argc, argv, help_options, long_options, &option_index);
+    if (current_option == -1) {
       break;
     }
-    switch (var) {
+
+    switch (current_option) {
       case 0:
         display_help(argv[0]);
         break;
 
+      case 'h':
       case '?':
-      case 'h': {
         display_help(argv[0]);
         exit(EXIT_SUCCESS);
-      }
 
-      case 'v': {
+      case 'v':
         show_version(argv[0]);
         exit(EXIT_SUCCESS);
-      }
 
       case 'D':
         config.isDaemon = true;
@@ -158,41 +196,28 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         break;
 
       case 'P':
-        if (strlen(optarg)) {
-          config.pidFile.assign(optarg);
-        } else {
-          display_help(argv[0], std::to_string(var));
-        }
+        handle_option_argument("pid-file", optarg, argv[0]);
+        config.pidFile.assign(optarg);
         break;
 
       case 'S':
-        if (strlen(optarg)) {
-          config.pathConfigFolder.assign(optarg);
-        } else {
-          display_help(argv[0], std::to_string(var));
-        }
+        handle_option_argument("configuration path", optarg, argv[0]);
+        config.pathConfigFolder.assign(optarg);
         break;
 
       case 'x':
-        if (strlen(optarg)) {
-          config.pathConfigFile.assign(optarg);
-        } else {
-          display_help(argv[0], std::to_string(var));
-        }
+        handle_option_argument("configuration file", optarg, argv[0]);
+        config.pathConfigFile.assign(optarg);
         break;
 
       case 'L':
-        if (strlen(optarg)) {
-          config.logFile.assign(optarg);
-        } else {
-          display_help(argv[0], std::to_string(var));
-        }
+        handle_option_argument("log file", optarg, argv[0]);
+        config.logFile.assign(optarg);
         break;
 
-      default: {
+      default:
+        std::cerr << "Unknown option: " << std::to_string(current_option) << std::endl;
         display_help(argv[0]);
-        exit(EXIT_FAILURE);
-      }
     }
   }
 }
