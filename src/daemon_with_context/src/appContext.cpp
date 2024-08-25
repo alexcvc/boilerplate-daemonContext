@@ -182,5 +182,6 @@ std::optional<bool> app::AppContext::process_shutdown() {
  ******************************************************************************/
 std::chrono::milliseconds app::AppContext::process_executing(const std::chrono::milliseconds& min_duration) {
   std::cout << "Processing the context. Minimal duration: " << min_duration.count() << " ms" << std::endl;
-  return min_duration > std::chrono::milliseconds(5000) ? std::chrono::milliseconds(1000) : min_duration + std::chrono::milliseconds(1000);
+  return min_duration > std::chrono::milliseconds(5000) ? std::chrono::milliseconds(1000)
+                                                        : min_duration + std::chrono::milliseconds(1000);
 }

@@ -39,9 +39,9 @@ class Daemon {
   /**
    * @brief Signals to exit the daemon.
    */
-  static constexpr int ExitSignal = SIGINT;         ///< Signal to exit the daemon
-  static constexpr int TerminateSignal = SIGTERM;   ///< Signal to terminate the daemon
-  static constexpr int ReloadSignal = SIGHUP;       ///< Signal to reload the daemon
+  static constexpr int ExitSignal = SIGINT;        ///< Signal to exit the daemon
+  static constexpr int TerminateSignal = SIGTERM;  ///< Signal to terminate the daemon
+  static constexpr int ReloadSignal = SIGHUP;      ///< Signal to reload the daemon
 
   /**
    * @brief Gets the instance of the daemon.
@@ -89,19 +89,25 @@ class Daemon {
    * @brief Sets the function to be called before the daemon starts.
    * @param func The function to be called.
    */
-  void set_start_function(std::function<std::optional<bool>()> func) { m_handlerBeforeToStart = func; }
+  void set_start_function(std::function<std::optional<bool>()> func) {
+    m_handlerBeforeToStart = func;
+  }
 
   /**
    * @brief Sets the function to be called when reloaded.
    * @param func The function to be called.
    */
-  void set_reload_function(std::function<std::optional<bool>()> func) { m_handlerReload = func; }
+  void set_reload_function(std::function<std::optional<bool>()> func) {
+    m_handlerReload = func;
+  }
 
   /**
    * @brief Sets the function to be called before exits.
    * @param func The function to be called.
    */
-  void set_close_function(std::function<std::optional<bool>()> func) { m_handlerBeforeToExit = func; }
+  void set_close_function(std::function<std::optional<bool>()> func) {
+    m_handlerBeforeToExit = func;
+  }
 
   /**
    * @brief Checks if the daemon is running.
@@ -118,13 +124,17 @@ class Daemon {
    * @brief Gets the state of the daemon.
    * @return The state of the daemon.
    */
-  [[nodiscard]] State get_state() const { return m_state; }
+  [[nodiscard]] State get_state() const {
+    return m_state;
+  }
 
   /**
    * @brief Sets the state of the daemon.
    * @param stop The state to be set.
    */
-  void set_state(State stop) { m_state = stop; }
+  void set_state(State stop) {
+    m_state = stop;
+  }
 
   /**
    * @brief Makes process as daemon in background.
@@ -174,10 +184,10 @@ class Daemon {
   bool write_pid_to_file(const std::string& pid_file_name);
 
   // Member variables
-  State m_state;                                                 ///< State of the daemon
-  std::function<std::optional<bool>()> m_handlerBeforeToStart;   ///< Function to be called before the daemon starts
-  std::function<std::optional<bool>()> m_handlerReload;          ///< Function to be called when the daemon is reloaded
-  std::function<std::optional<bool>()> m_handlerBeforeToExit;    ///< Function to be called before the daemon exits
+  State m_state;                                                ///< State of the daemon
+  std::function<std::optional<bool>()> m_handlerBeforeToStart;  ///< Function to be called before the daemon starts
+  std::function<std::optional<bool>()> m_handlerReload;         ///< Function to be called when the daemon is reloaded
+  std::function<std::optional<bool>()> m_handlerBeforeToExit;   ///< Function to be called before the daemon exits
 };
 
-}   // namespace app
+}  // namespace app

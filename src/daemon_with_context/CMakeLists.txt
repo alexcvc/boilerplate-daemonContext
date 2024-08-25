@@ -56,11 +56,11 @@ target_link_libraries(${TargetName} PRIVATE fmt::fmt-header-only spdlog::spdlog_
 
 # post build copy optional
 if ((NOT ${CMAKE_POSTBUILD_OUTPUT_DIRECTORY}) AND (IS_DIRECTORY ${CMAKE_POSTBUILD_OUTPUT_DIRECTORY}))
-   message(STATUS "Target ${TargetName} will be installed in ${CMAKE_POSTBUILD_OUTPUT_DIRECTORY}")
-   # Copy target file to another location in a post build step in
-   add_custom_command(TARGET ${TargetName} POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TargetName}> ${CMAKE_POSTBUILD_OUTPUT_DIRECTORY}
-   )
+  message(STATUS "Target ${TargetName} will be installed in ${CMAKE_POSTBUILD_OUTPUT_DIRECTORY}")
+  # Copy target file to another location in a post build step in
+  add_custom_command(TARGET ${TargetName} POST_BUILD
+     COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TargetName}> ${CMAKE_POSTBUILD_OUTPUT_DIRECTORY}
+  )
 endif ()
 
 install(TARGETS ${TargetName} DESTINATION bin)

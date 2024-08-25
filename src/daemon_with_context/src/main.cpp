@@ -12,14 +12,16 @@
 //----------------------------------------------------------------------------
 
 #include <fcntl.h>
-#include <fmt/format.h>
 #include <getopt.h>
-#include <spdlog/spdlog.h>
+
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <thread>
+
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
 
 #include "appContext.hpp"
 #include "daemon.hpp"
@@ -76,7 +78,8 @@ static void display_help(const char* prog, std::string_view errorOption = "") {
   if (!errorOption.empty()) {
     std::cerr << "Error in option: " << errorOption << "\n";
   }
-  std::cout << "\nUsage: " << prog << " [OPTIONS]\n" << std::endl
+  std::cout << "\nUsage: " << prog << " [OPTIONS]\n"
+            << std::endl
             << "  -D, --background         start as daemon" << std::endl
             << "  -F, --foreground         start in foreground with test console" << std::endl
             << "  -S, --cfgpath            path to folder with configuration files" << std::endl
@@ -112,15 +115,15 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
     int option_index = 0;
     static const char* short_options = "h?vDFP:S:x:L:";
     static const struct option long_options[] = {
-       {"help", no_argument, nullptr, 0},
-       {"version", no_argument, nullptr, 'v'},
-       {"background", no_argument, nullptr, 'D'},
-       {"foreground", no_argument, nullptr, 'F'},
-       {"pidfile", required_argument, nullptr, 'P'},
-       {"cfgpath", required_argument, nullptr, 'S'},
-       {"cfgfile", required_argument, nullptr, 'x'},
-       {"logfile", required_argument, nullptr, 'L'},
-       {nullptr, 0, nullptr, 0},
+        {"help", no_argument, nullptr, 0},
+        {"version", no_argument, nullptr, 'v'},
+        {"background", no_argument, nullptr, 'D'},
+        {"foreground", no_argument, nullptr, 'F'},
+        {"pidfile", required_argument, nullptr, 'P'},
+        {"cfgpath", required_argument, nullptr, 'S'},
+        {"cfgfile", required_argument, nullptr, 'x'},
+        {"logfile", required_argument, nullptr, 'L'},
+        {nullptr, 0, nullptr, 0},
     };
 
     int var = getopt_long(argc, argv, short_options, long_options, &option_index);
@@ -176,7 +179,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         } else {
           display_help(argv[0], std::to_string(var));
         }
-      break;
+        break;
 
       case 'L':
         if (strlen(optarg)) {
@@ -254,7 +257,7 @@ void TaskAppContextFunc(app::AppContext& app_context, app::DaemonConfig& daemon_
       spdlog::info("stop requested for an application task");
       break;
     }
-  }   // End of while loop
+  }  // End of while loop
 
   spdlog::info("application task completed");
 }
@@ -266,9 +269,9 @@ void TaskAppContextFunc(app::AppContext& app_context, app::DaemonConfig& daemon_
 int main(int argc, char** argv) {
   // The Daemon class is a singleton to avoid be instantiated more than once
   app::Daemon& daemon = app::Daemon::instance();
-  app::DaemonConfig appConfig;   ///< The configuration of the daemon
-  app::AppContext appContext;    ///< The application context
-  std::stop_source stop_src;     ///< stop token for the main loop
+  app::DaemonConfig appConfig;  ///< The configuration of the daemon
+  app::AppContext appContext;   ///< The application context
+  std::stop_source stop_src;    ///< stop token for the main loop
   std::thread taskAppContext;
 
   //----------------------------------------------------------
@@ -279,28 +282,28 @@ int main(int argc, char** argv) {
   //----------------------------------------------------------
   // set in daemon all handlers
   //----------------------------------------------------------
-  daemon.set_start_function( [&]( ) {
-    spdlog::info( "Start all function called." );
+  daemon.set_start_function([&]() {
+    spdlog::info("Start all function called.");
     return appContext.process_start();
   });
 
-  daemon.set_close_function( [&]( ) {
-    spdlog::info( "Close all function called." );
+  daemon.set_close_function([&]() {
+    spdlog::info("Close all function called.");
     return appContext.process_shutdown();
   });
 
-  daemon.set_reload_function( [&]( ) {
-    spdlog::info( "Reload function called." );
+  daemon.set_reload_function([&]() {
+    spdlog::info("Reload function called.");
     return appContext.process_reconfigure();
   });
 
-  daemon.set_user1_function( [&]( ) {
-    spdlog::info( "User1 function called." );
+  daemon.set_user1_function([&]() {
+    spdlog::info("User1 function called.");
     return appContext.process_user1();
   });
 
-  daemon.set_user2_function( [&]( ) {
-    spdlog::info( "User2 function called." );
+  daemon.set_user2_function([&]() {
+    spdlog::info("User2 function called.");
     return appContext.process_user2();
   });
 
@@ -308,7 +311,7 @@ int main(int argc, char** argv) {
   // Check integrity this configuration
   //----------------------------------------------------------
   if (auto res = appContext.validate_configuration(appConfig); res.has_value() && !res.value()) {
-    spdlog::warn( "configuration mismatch. Exit");
+    spdlog::warn("configuration mismatch. Exit");
     exit(EXIT_FAILURE);
   }
 
@@ -316,7 +319,7 @@ int main(int argc, char** argv) {
   // Prepare application to start
   //----------------------------------------------------------
   if (auto res = appContext.process_start(); res.has_value() && !res.value()) {
-    spdlog::warn( "prepare the application for task start failed. Exit");
+    spdlog::warn("prepare the application for task start failed. Exit");
     exit(EXIT_FAILURE);
   }
 
@@ -324,13 +327,13 @@ int main(int argc, char** argv) {
   // Start all
   //----------------------------------------------------------
   if (auto result = daemon.start_all(); result.has_value() && !result.value()) {
-    spdlog::warn( "Error starting the daemon.");
+    spdlog::warn("Error starting the daemon.");
     return EXIT_FAILURE;
   }
 
   if (appConfig.isDaemon) {
     if (auto result = daemon.make_daemon(appConfig.pidFile); result.has_value() && !result.value()) {
-      spdlog::warn( "Error starting the daemon.");
+      spdlog::warn("Error starting the daemon.");
       return EXIT_FAILURE;
     }
   }
@@ -339,7 +342,8 @@ int main(int argc, char** argv) {
   // start application task
   //----------------------------------------------------------
   // Create all workers and pass stop tokens
-  taskAppContext = std::move(std::thread(TaskAppContextFunc, std::ref(appContext), std::ref(appConfig), stop_src.get_token()));
+  taskAppContext =
+      std::move(std::thread(TaskAppContextFunc, std::ref(appContext), std::ref(appConfig), stop_src.get_token()));
 
   //----------------------------------------------------------
   // Main loop
