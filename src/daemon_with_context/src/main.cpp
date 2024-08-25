@@ -146,12 +146,12 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
 
       case 'D':
         config.isDaemon = true;
-        config.hasTestConsoleInForeground = false;
+        config.hasTestConsole = false;
         break;
 
       case 'F':
         config.isDaemon = false;
-        config.hasTestConsoleInForeground = true;
+        config.hasTestConsole = true;
         break;
 
       case 'P':
@@ -170,17 +170,17 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         }
         break;
 
-      case 'L':
+      case 'x':
         if (strlen(optarg)) {
-          config.logFile.assign(optarg);
+          config.pathConfigFile.assign(optarg);
         } else {
           display_help(argv[0], std::to_string(var));
         }
-        break;
+      break;
 
-      case 'x':
+      case 'L':
         if (strlen(optarg)) {
-          config.configFile.assign(optarg);
+          config.logFile.assign(optarg);
         } else {
           display_help(argv[0], std::to_string(var));
         }
@@ -279,21 +279,29 @@ int main(int argc, char** argv) {
   //----------------------------------------------------------
   // set in daemon all handlers
   //----------------------------------------------------------
-  daemon.set_start_function([]() {
-    spdlog::info("Start all function called.");
-    return true;
+  daemon.set_start_function( [&]( ) {
+    spdlog::info( "Start all function called." );
+    return appContext.process_start();
   });
 
-  // Set the stop all function
-  daemon.set_close_function([]() {
-    spdlog::info("Close all function called.");
-    return true;
+  daemon.set_close_function( [&]( ) {
+    spdlog::info( "Close all function called." );
+    return appContext.process_shutdown();
   });
 
-  // Set the reload function to be called in case of receiving a SIGHUP signal
-  daemon.set_reload_function([]() {
-    spdlog::info("Reload function called.");
-    return true;
+  daemon.set_reload_function( [&]( ) {
+    spdlog::info( "Reload function called." );
+    return appContext.process_reconfigure();
+  });
+
+  daemon.set_user1_function( [&]( ) {
+    spdlog::info( "User1 function called." );
+    return appContext.process_user1();
+  });
+
+  daemon.set_user2_function( [&]( ) {
+    spdlog::info( "User2 function called." );
+    return appContext.process_user2();
   });
 
   //----------------------------------------------------------
@@ -336,13 +344,13 @@ int main(int argc, char** argv) {
   //----------------------------------------------------------
   // Main loop
 
-  if (appConfig.hasTestConsoleInForeground) {
+  if (appConfig.hasTestConsole) {
     std::cout << "Press the h key to display the Console Menu..." << std::endl;
   }
 
   // Daemon main loop
   while (daemon.is_running()) {
-    if (appConfig.hasTestConsoleInForeground) {
+    if (appConfig.hasTestConsole) {
       auto result = handle_console();
       switch (result) {
         case handleConsoleType::exit:
@@ -363,21 +371,25 @@ int main(int argc, char** argv) {
   // set token to stop all worker
   stop_src.request_stop();
 
+  spdlog::info("The daemon process is stopping");
+
   // wakeup all tasks
   {
     std::unique_lock lck(daemon_event.event_mutex);
     daemon_event.event_condition.notify_all();
   }
 
+  spdlog::info("Waiting for the application task to complete");
+
   // Join threads
   taskAppContext.join();
 
   if (auto result = daemon.close_all(); result.has_value() && !result.value()) {
-    std::cerr << "Error closing the daemon." << std::endl;
+    spdlog::error("Error closing the daemon.");
     return EXIT_FAILURE;
   }
 
-  std::cout << "The daemon process ended successfully" << std::endl;
+  spdlog::info("The daemon process ended successfully");
 
   return EXIT_SUCCESS;
 }

@@ -20,11 +20,11 @@ namespace app {
  * running in the foreground.
  */
 struct DaemonConfig {
-  std::string pidFile;                      ///< The path of the PID file
-  bool isDaemon{false};                     ///< Whether the process should run as a daemon
-  bool hasTestConsoleInForeground{false};   ///< Whether there is a test console running in the foreground
-  std::string configFile;                   ///< The path of the configuration file
-  std::string pathConfigFolder;              ///< The path of the configuration folder
-  std::string logFile;                      ///< The path of the log file
+  std::string pidFile;           ///< The path of the PID file
+  bool isDaemon{false};          ///< Whether the process should run as a daemon
+  bool hasTestConsole{false};    ///< Whether there is a test console running in the foreground
+  std::string pathConfigFile;    ///< The path of the configuration file
+  std::string pathConfigFolder;  ///< The path of the configuration folder
+  std::string logFile;           ///< The path of the log file
 };
-}   // namespace app
+}  // namespace app

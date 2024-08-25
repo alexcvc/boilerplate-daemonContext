@@ -7,6 +7,12 @@
 // For a copy, see <https://opensource.org/licenses/MIT>.
 //
 
+/**
+ * \file
+ * \brief   contains the application context class
+ * \ingroup Daemon with Application Context
+ */
+
 #pragma once
 #include <optional>
 
@@ -66,6 +72,9 @@ class IAppContext {
    * Not defined return value means that the function is not implemented.
    */
   [[nodiscard]] virtual std::optional<bool> process_start() = 0;
+  [[nodiscard]] static std::optional<bool> process_start(IAppContext& self) {
+    return self.process_start();
+  }
 
   /**
    * @brief Process everything before restarting the application
@@ -73,6 +82,29 @@ class IAppContext {
    * Not defined return value means that the function is not implemented.
    */
   [[nodiscard]] virtual std::optional<bool> process_restart() = 0;
+  [[nodiscard]] static std::optional<bool> process_restart(IAppContext& self) {
+    return self.process_restart();
+  }
+
+  /**
+   * @brief Process everything after USER1 signal
+   * @return std::optional<bool> true if successful to start, otherwise false.
+   * Not defined return value means that the function is not implemented.
+   */
+  [[nodiscard]] virtual std::optional<bool> process_user1() = 0;
+  [[nodiscard]] static std::optional<bool> process_user1(IAppContext& self) {
+    return self.process_user1();
+  }
+
+  /**
+   * @brief Process everything after USER2 signal
+   * @return std::optional<bool> true if successful to start, otherwise false.
+   * Not defined return value means that the function is not implemented.
+   */
+  [[nodiscard]] virtual std::optional<bool> process_user2() = 0;
+  [[nodiscard]] static std::optional<bool> process_user2(IAppContext& self) {
+    return self.process_user2();
+  }
 
   /**
    * @brief Process everything before leaving the application
@@ -80,6 +112,9 @@ class IAppContext {
    * Not defined return value means that the function is not implemented.
    */
   [[nodiscard]] virtual std::optional<bool> process_shutdown() = 0;
+  [[nodiscard]] static std::optional<bool> process_shutdown(IAppContext& self) {
+    return self.process_shutdown();
+  }
 
   /**
    * @brief processing the context.
@@ -87,6 +122,10 @@ class IAppContext {
    * @return The earlier timeout until next process.
    */
   [[nodiscard]] virtual std::chrono::milliseconds process_executing(const std::chrono::milliseconds& min_duration) = 0;
+  [[nodiscard]] static std::chrono::milliseconds process_executing(IAppContext& self,
+                                                                   const std::chrono::milliseconds& min_duration) {
+    return self.process_executing(min_duration);
+  }
 };
 
-}   // namespace app
+}  // namespace app

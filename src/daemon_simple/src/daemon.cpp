@@ -39,7 +39,7 @@ app::Daemon::Daemon() {
  * @param The signal number received.
  */
 void app::Daemon::signal_handler(int signal) {
-  spdlog::info("Interrupt signal number [{}] received.", signal);
+  spdlog::info("Signal number={} received.", signal);
 
   switch (signal) {
     case ExitSignal:

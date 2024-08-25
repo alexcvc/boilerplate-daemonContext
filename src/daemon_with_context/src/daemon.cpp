@@ -7,27 +7,30 @@
 // For a copy, see <https://opensource.org/licenses/MIT>.
 //
 
+// clang-format off
 #include "daemon.hpp"
-#include <spdlog/spdlog.h>
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
+
+#include <spdlog/spdlog.h>
+#include <sys/stat.h>
+// clang-format on
 
 /**
  * @brief Constructor for the Daemon class.
  *
  * This constructor initializes the state of the daemon to 'start' and sets up signal handlers
- * for the 'ExitSignal', 'TerminateSignal', and 'ReloadSignal' signals.
- *
- * @see ExitSignal
- * @see TerminateSignal
- * @see ReloadSignal
+ * for the 'ExitSignal', 'TerminateSignal', 'ReloadSignal', 'User1' and 'User2' signals.
  */
 app::Daemon::Daemon() {
   m_state = State::start;
   signal(ExitSignal, Daemon::signal_handler);
   signal(TerminateSignal, Daemon::signal_handler);
   signal(ReloadSignal, Daemon::signal_handler);
+  signal(UserSignal1, Daemon::signal_handler);
+  signal(UserSignal2, Daemon::signal_handler);
 }
 
 /**
@@ -51,6 +54,14 @@ void app::Daemon::signal_handler(int signal) {
       Daemon::instance().m_state = State::reload;
       break;
     }
+    case UserSignal1: {
+      Daemon::instance().m_state = State::user1;
+      break;
+    }
+    case UserSignal2: {
+      Daemon::instance().m_state = State::user2;
+      break;
+    }
   }
 }
 
@@ -59,7 +70,7 @@ void app::Daemon::signal_handler(int signal) {
  * @return The process ID of the child process. Returns -1 if the fork operation fails.
  */
 pid_t app::Daemon::create_child_process() {
-  pid_t pid = fork();   // create new process
+  pid_t pid = fork();  // create new process
   if (pid < 0) {
     // print error message and return -1 if fork failed
     perror("Can't fork first child");
@@ -83,20 +94,36 @@ pid_t app::Daemon::create_child_process() {
  *    The daemon should not prevent unmounting of file systems.
  * 3. Changes the file mode creation mask of the process. The umask function sets the process's file mode creation mask
  *    (umask) to mask & 0777 (only the file permission bits of mask are used), and returns the previous umask.
- *
+ * @return True if the child process is initialized successfully, false otherwise.
  * @see setsid()
  * @see chdir()
  * @see umask()
  */
-void app::Daemon::init_child_process() {
+bool app::Daemon::init_child_process() {
   // create a new session.
-  setsid();
+  if (setsid() < 0) {
+    std::cerr << "failed to setsid" << std::system_error(errno, std::system_category()).what() << std::endl;
+    return false;
+  } else {
+    try {
+      // change the current working directory to root.
+      std::filesystem::current_path("/");
 
-  // change the current working directory to root.
-  chdir("/");
+      // The daemon will have the following permissions,
+      // which are not going to make the security world very happy
+      umask(0);
 
-  // change the file mode creation mask of the process.
-  umask(0);
+      // successfully initialized the child process
+      return true;
+    } catch (const std::filesystem::filesystem_error& e) {
+      std::cerr << "Filesystem exception caught by set current path '/': " << e.what() << std::endl;
+    } catch (const std::system_error& e) {
+      std::cerr << "System exception caught by set current path '/': " << e.what() << std::endl;
+    } catch (...) {
+      std::cerr << "Exception caught by set current path '/'" << std::endl;
+    }
+  }
+  return false;
 }
 
 /**
@@ -135,7 +162,9 @@ std::optional<bool> app::Daemon::make_daemon(const std::string& pid_file_name) {
     return false;
   }
 
-  this->init_child_process();
+  if (!this->init_child_process()) {
+    return false;
+  }
 
   bool isWritten = this->write_pid_to_file(pid_file_name);
   if (!isWritten) {
