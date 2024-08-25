@@ -262,10 +262,20 @@ void TaskAppContextFunc(app::AppContext& app_context, app::DaemonConfig& daemon_
   spdlog::info("application task completed");
 }
 
-/**
+/*************************************************************************/ /**
+ * @brief Check and exit on error
+ *****************************************************************************/
+void check_and_exit_on_error(std::optional<bool> result, const std::string& error_message) {
+  if (result.has_value() && !result.value()) {
+     spdlog::warn(error_message + ". Exit");
+     exit(EXIT_FAILURE);
+   }
+}
+
+/*************************************************************************/ /**
  * @file main.c
  * @brief This is the main entry point for the application.
- */
+ *****************************************************************************/
 int main(int argc, char** argv) {
   // The Daemon class is a singleton to avoid be instantiated more than once
   app::Daemon& daemon = app::Daemon::instance();
@@ -310,10 +320,7 @@ int main(int argc, char** argv) {
   //----------------------------------------------------------
   // Check integrity this configuration
   //----------------------------------------------------------
-  if (auto res = appContext.validate_configuration(appConfig); res.has_value() && !res.value()) {
-    spdlog::warn("configuration mismatch. Exit");
-    exit(EXIT_FAILURE);
-  }
+  check_and_exit_on_error(appContext.validate_configuration(appConfig), "configuration mismatch");
 
   //----------------------------------------------------------
   // Prepare application to start
