@@ -267,9 +267,9 @@ void TaskAppContextFunc(app::AppContext& app_context, app::DaemonConfig& daemon_
  *****************************************************************************/
 void check_and_exit_on_error(std::optional<bool> result, const std::string& error_message) {
   if (result.has_value() && !result.value()) {
-     spdlog::warn(error_message + ". Exit");
-     exit(EXIT_FAILURE);
-   }
+    spdlog::warn(error_message + ". Exit");
+    exit(EXIT_FAILURE);
+  }
 }
 
 /*************************************************************************/ /**
