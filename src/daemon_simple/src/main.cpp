@@ -12,17 +12,19 @@
 //----------------------------------------------------------------------------
 
 #include <fcntl.h>
-#include <fmt/format.h>
 #include <getopt.h>
-#include <spdlog/spdlog.h>
+
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <thread>
 
-#include "daemonConfig.hpp"
+#include <fmt/format.h>
+#include <spdlog/spdlog.h>
+
 #include "daemon.hpp"
+#include "daemonConfig.hpp"
 #include "version.hpp"
 
 //----------------------------------------------------------------------------
@@ -104,15 +106,15 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
     int option_index = 0;
     static const char* short_options = "h?vDFP:S:x:L:";
     static const struct option long_options[] = {
-      {"help", no_argument, 0, 0},
-      {"version", no_argument, 0, 'v'},
-      {"background", no_argument, 0, 'D'},
-      {"foreground", no_argument, 0, 'F'},
-      {"pidfile", required_argument, 0, 'P'},
-      {"cfgpath", required_argument, 0, 'S'},
-      {"cfgfile", required_argument, 0, 'x'},
-      {"logfile", required_argument, 0, 'L'},
-      {0, 0, 0, 0},
+        {"help", no_argument, 0, 0},
+        {"version", no_argument, 0, 'v'},
+        {"background", no_argument, 0, 'D'},
+        {"foreground", no_argument, 0, 'F'},
+        {"pidfile", required_argument, 0, 'P'},
+        {"cfgpath", required_argument, 0, 'S'},
+        {"cfgfile", required_argument, 0, 'x'},
+        {"logfile", required_argument, 0, 'L'},
+        {0, 0, 0, 0},
     };
 
     int var = getopt_long(argc, argv, short_options, long_options, &option_index);
@@ -152,7 +154,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         } else {
           display_help(argv[0], var);
         }
-      break;
+        break;
 
       case 'S':
         if (strlen(optarg)) {
@@ -160,7 +162,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         } else {
           display_help(argv[0], var);
         }
-      break;
+        break;
 
       case 'L':
         if (strlen(optarg)) {
@@ -168,7 +170,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         } else {
           display_help(argv[0], var);
         }
-      break;
+        break;
 
       case 'x':
         if (strlen(optarg)) {
@@ -176,7 +178,7 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         } else {
           display_help(argv[0], var);
         }
-      break;
+        break;
 
       default: {
         display_help(argv[0]);

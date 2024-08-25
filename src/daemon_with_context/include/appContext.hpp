@@ -7,18 +7,17 @@
 // For a copy, see <https://opensource.org/licenses/MIT>.
 //
 
-/*************************************************************************/ /**
- * \file
- * \brief  contains class with implementation application context functions.
- * \author
- * \date    2024-06-29
- * \ingroup
- *****************************************************************************/
+/**
+* \file
+ * \brief   contains the application context class
+ * \ingroup Daemon with Application Context
+ */
 
 #pragma once
 
-#include <filesystem>
 #include <chrono>
+#include <filesystem>
+#include <mutex>
 
 #include "appContextBase.hpp"
 
@@ -29,9 +28,9 @@ namespace app {
  */
 class AppContext : public IAppContext {
   // Private Variables
-  std::filesystem::path m_configFile;   ///< The path of the configuration file
-  std::filesystem::path m_pathConfig;   ///< The path of the configuration folder
-  std::filesystem::path m_logFile;      ///< The path of the log file
+  std::filesystem::path m_pathConfigFile;    ///< The path of the configuration file
+  std::filesystem::path m_pathConfigFolder;  ///< The path of the configuration folder
+  std::filesystem::path m_pathLogFile;       ///< The path of the log file
 
  public:
   /// constructor
@@ -43,9 +42,7 @@ class AppContext : public IAppContext {
   /**
    * @brief Validates the configuration of the daemon.
    * @param config The configuration of the daemon to validate.
-   * @return An optional boolean value. If the configuration is valid, the method returns an optional that contains the boolean value 'true'.
-   *         If the configuration is not valid, the method returns an optional that contains the boolean value 'false'.
-   *         If an error occurs during the validation process, the method returns an empty optional.
+   * @return An optional boolean value.
    */
   [[nodiscard]] std::optional<bool> validate_configuration(const app::DaemonConfig& config) override;
 
@@ -70,6 +67,20 @@ class AppContext : public IAppContext {
   [[nodiscard]] std::optional<bool> process_restart() override;
 
   /**
+   * @brief Process everything after USER1 signal
+   * @return std::optional<bool> true if successful to start, otherwise false.
+   * Not defined return value means that the function is not implemented.
+   */
+  [[nodiscard]] std::optional<bool> process_user1() override;
+
+  /**
+   * @brief Process everything after USER2 signal
+   * @return std::optional<bool> true if successful to start, otherwise false.
+   * Not defined return value means that the function is not implemented.
+   */
+  [[nodiscard]] std::optional<bool> process_user2() override;
+
+  /**
    * @brief Performs a graceful shutdown of the application.
    * @return An optional boolean value indicating the success of the shutdown process.
    *         The optional value will be empty if the shutdown process encountered an error.
@@ -82,6 +93,13 @@ class AppContext : public IAppContext {
    * @return The earlier timeout until next process.
    */
   [[nodiscard]] std::chrono::milliseconds process_executing(const std::chrono::milliseconds& min_duration) override;
+
+  /**
+   * @brief Set the path of the configuration file.
+   * @param path The path of the configuration file.
+   * @return true if the path exists or empty, otherwise false.
+   */
+  [[nodiscard]] bool validate_path(const std::string& path, const std::string& desc) const;
 };
 
-}   // namespace app
+}  // namespace app
