@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 ### Set project name
-set(TargetName task_abstracting)
+set(TargetName taskController)
 
 # Set the PROJECT_NAME, PROJECT_VERSION as well as other variable
 project(${TargetName}
@@ -18,19 +18,13 @@ find_package(spdlog REQUIRED)
 find_package(fmt REQUIRED)
 
 ### List of CPP (source) library files.
-file(GLOB_RECURSE ${TargetName}_SRC src/*.c*)
+file(GLOB_RECURSE ${TargetName}_SRC *.cpp)
 
 ### List of HPP (header) library files.
-file(GLOB_RECURSE ${TargetName}_HDR include/*.h*)
-
-# Make a version file containing the hash and date from git.
-configure_file("${CMAKE_SOURCE_DIR}/.cmake/version.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/version.cpp")
-configure_file("${CMAKE_SOURCE_DIR}/.cmake/version.hpp.in" "${CMAKE_CURRENT_BINARY_DIR}/version.hpp")
+file(GLOB_RECURSE ${TargetName}_HDR *.hpp)
 
 ### add executable
 add_executable(${TargetName}
-   ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
-   ${CMAKE_CURRENT_BINARY_DIR}/version.hpp
    ${${TargetName}_SRC}
    ${${TargetName}_HDR}
 )
@@ -39,7 +33,6 @@ target_include_directories(${TargetName} PRIVATE
    ${SPDLOG_HEADERS_DIR}
    ${FMT_HEADERS_DIR}
    ${CMAKE_CURRENT_BINARY_DIR}
-   "include"
 )
 
 find_package(fmt)
