@@ -1,2 +1,4 @@
+add_subdirectory(daemon)
 add_subdirectory(daemon_simple)
 add_subdirectory(daemon_with_context)
+add_subdirectory(task_controller)

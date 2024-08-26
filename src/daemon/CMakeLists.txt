@@ -1,36 +1,27 @@
 cmake_minimum_required(VERSION 3.5)
 
 ### Set project name
-set(TargetName daemon_with_context)
+set(TargetName daemon)
 
 # Set the PROJECT_NAME, PROJECT_VERSION as well as other variable
 project(${TargetName}
    VERSION 1.0.0
-   DESCRIPTION "C++ daemon with application context"
+   DESCRIPTION "C++ daemon example"
    LANGUAGES CXX C
 )
 
 ### set readable summary for this version
-set(PROJECT_VERSION_DESCRIPTION "Example, how to use application context in daemon application")
+set(PROJECT_VERSION_DESCRIPTION "Example, how to use daemon in C++ multi-threading application")
 
 find_package(Threads REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(fmt REQUIRED)
 
 ### List of CPP (source) library files.
-set(${TargetName}_SRC
-   "src/appContext.cpp"
-   "src/daemon.cpp"
-   "src/main.cpp"
-)
+file(GLOB_RECURSE ${TargetName}_SRC *.cpp)
 
 ### List of HPP (header) library files.
-set(${TargetName}_HDR
-   "include/appContext.hpp"
-   "include/appContextBase.hpp"
-   "../daemon/daemon.hpp"
-   "include/daemonConfig.hpp"
-)
+file(GLOB_RECURSE ${TargetName}_HDR *.hpp)
 
 # Make a version file containing the hash and date from git.
 configure_file("${CMAKE_SOURCE_DIR}/.cmake/version.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/version.cpp")
