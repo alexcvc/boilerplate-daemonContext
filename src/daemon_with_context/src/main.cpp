@@ -322,6 +322,7 @@ int main(int argc, char** argv) {
     return appContext.process_start();
   });
 
+  // Set the stop all function
   daemon.set_close_function([&]() {
     spdlog::info("Close all function called.");
     return appContext.process_shutdown();

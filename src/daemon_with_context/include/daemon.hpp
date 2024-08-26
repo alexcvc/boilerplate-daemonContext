@@ -1,16 +1,7 @@
-/* SPDX-License-Identifier: MIT */
-//
-// Copyright (c) 2024 Alexander Sacharov <a.sacharov@gmx.de>
-//               All rights reserved.
-//
-// This work is licensed under the terms of the MIT license.
-// For a copy, see <https://opensource.org/licenses/MIT>.
-//
-
 /**
- * \file
- * \brief   contains the daemon class
- * \ingroup Daemon with Application Context
+ * @file
+ * @brief   contains the daemon class
+ * @ingroup Daemon with Application Context
  */
 
 #pragma once
