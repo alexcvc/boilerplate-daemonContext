@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 # Set the PROJECT_NAME, PROJECT_VERSION as well as other variable
-project(daemon_cpp_boilerplate
+project(boilerplate_daemonCpp
    VERSION 1.0.0
    DESCRIPTION "C++ daemon boilerplate"
    LANGUAGES CXX C
