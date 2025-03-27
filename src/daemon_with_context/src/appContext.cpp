@@ -14,8 +14,8 @@
 #include <iostream>
 #include <regex>
 #include <thread>
-
-#include <fmt/chrono.h>
+#include <filesystem>
+#include <spdlog/spdlog.h>
 
 //-----------------------------------------------------------------------------
 // includes
@@ -50,11 +50,11 @@
  *         or already exists, false otherwise.
  ******************************************************************************/
 bool app::AppContext::validate_path(const std::string& path, const std::string& desc) const {
-  std::cout << "Application context: Validating path: " << path << std::endl;
+  spdlog::info("Validating path: {}", path);
 
   if (!path.empty()) {
     if (!std::filesystem::exists(path)) {
-      std::cerr << desc << " \"" << path << "\" doesn't exist" << std::endl;
+      spdlog::error("{} \"{}\" doesn't exist", desc, path);
       return false;
     }
   }
@@ -73,7 +73,7 @@ bool app::AppContext::validate_path(const std::string& path, const std::string& 
 std::optional<bool> app::AppContext::validate_configuration(const app::DaemonConfig& config) {
   int errorCount{0};
 
-  std::cout << "Application context: Validating the configuration" << std::endl;
+  spdlog::info("Validating the configuration");
 
   m_pathConfigFile = config.pathConfigFile;
   m_pathConfigFolder = config.pathConfigFolder;
@@ -115,7 +115,7 @@ std::optional<bool> app::AppContext::validate_configuration(const app::DaemonCon
 * process, the method returns an empty optional.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_reconfigure() {
-  std::cout << "Application context: Reconfiguring the application" << std::endl;
+  spdlog::info("Reconfiguring the application");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   return true;
 }
@@ -126,7 +126,7 @@ std::optional<bool> app::AppContext::process_reconfigure() {
  *         Returns std::nullopt if failed, otherwise returns true.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_restart() {
-  std ::cout << "Application context: Restarting the application" << std::endl;
+  spdlog::info("Restarting the application");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   return true;
 }
@@ -137,7 +137,7 @@ std::optional<bool> app::AppContext::process_restart() {
  *         Returns std::nullopt if failed, otherwise returns true.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_user1() {
-  std::cout << "Application context: get and process the USER1 signal" << std::endl;
+  spdlog::info("Processing USER1 signal");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   return true;
 }
@@ -148,7 +148,7 @@ std::optional<bool> app::AppContext::process_user1() {
  *         Returns std::nullopt if failed, otherwise returns true.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_user2() {
-  std::cout << "Application context: get and process the USER2 signal" << std::endl;
+  spdlog::info("Processing USER2 signal");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   return true;
 }
@@ -159,7 +159,7 @@ std::optional<bool> app::AppContext::process_user2() {
  *         Returns std::nullopt if failed, otherwise returns true.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_start() {
-  std ::cout << "Application context: Start the application" << std::endl;
+  spdlog::info("Starting the application");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   return true;
 }
@@ -170,7 +170,7 @@ std::optional<bool> app::AppContext::process_start() {
  *         The optional value will be empty if the shutdown process encountered an error.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_shutdown() {
-  std ::cout << "Application context: Shutting down the application" << std::endl;
+  spdlog::info("Shutting down the application");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   return true;
 }
@@ -181,7 +181,7 @@ std::optional<bool> app::AppContext::process_shutdown() {
  * @return The earlier timeout until next process.
  ******************************************************************************/
 std::chrono::milliseconds app::AppContext::process_executing(const std::chrono::milliseconds& min_duration) {
-  std::cout << "Processing the context. Minimal duration: " << min_duration.count() << " ms" << std::endl;
+  spdlog::info("Processing the context. Minimal duration: {} ms", min_duration.count());
   return min_duration > std::chrono::milliseconds(5000) ? std::chrono::milliseconds(1000)
                                                         : min_duration + std::chrono::milliseconds(1000);
 }
