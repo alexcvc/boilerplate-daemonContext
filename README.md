@@ -5,19 +5,19 @@
 This contains another C++ daemon boilerplate implementation
 
 This contains another C++ daemon boilerplate implementation.
-A focus of this implementation the embedded Linux applications.
+A focus of this implementation is the embedded Linux applications.
 
-There are several optional features such as foreground execution and a test console.
+There are several optional features, such as foreground execution and a test console.
 The C++ compiler must support at least C++11, a C++20 compiler is preferred for future enhancements.
 
-In the TODO plan there are followings:
+In the TODO plan there are the following:
 
 1) Examples of using and extending this boilerplate for a real application with a separate implementation of an independent application
    context;
 2) secure use in multithreaded applications;
-3) application restart without stop and start daemon.
+3) application restarts without a stop and starts daemon.
 4) examples an abstract context application for protocol converter f.e. IEC61850, IE60870-5-10X;
-5) examples of how to use these code in IoT applications with Raspberry and BeagleBoard.
+5) examples of how to use these codes in IoT applications with Raspberry and BeagleBoard.
 
 ## Important notes for C++17
 
@@ -27,7 +27,7 @@ In the TODO plan there are followings:
 
 - Introduced in C++20 as part of the cooperative cancellation mechanism with `std::stop_token`.
 - It registers a callback function that automatically executes when a `std::stop_source` requests cancellation.
-- It helps with clean-up or graceful shutdown when cancellation occurs.
+- It helps with cleanup or graceful shutdown when cancellation occurs.
 
 Example usage in C++20:
 
