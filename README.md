@@ -19,7 +19,7 @@ In the TODO plan there are the following:
 4) examples an abstract context application for protocol converter f.e. IEC61850, IE60870-5-10X;
 5) examples of how to use these codes in IoT applications with Raspberry and BeagleBoard.
 
-# Important Notes for C++11/14/17
+## Important Notes for C++11/14/17
 
 ### `std::stop_callback`:
 
