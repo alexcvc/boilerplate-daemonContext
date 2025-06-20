@@ -19,15 +19,27 @@ In the TODO plan there are the following:
 4) examples an abstract context application for protocol converter f.e. IEC61850, IE60870-5-10X;
 5) examples of how to use these codes in IoT applications with Raspberry and BeagleBoard.
 
-## Important notes for C++17
+# Important Notes for C++17
 
 ## `std::stop_callback` with `get_token()` under C++17
 
 ### `std::stop_callback`:
 
 - Introduced in C++20 as part of the cooperative cancellation mechanism with `std::stop_token`.
-- It registers a callback function that automatically executes when a `std::stop_source` requests cancellation.
-- It helps with cleanup or graceful shutdown when cancellation occurs.
+- It allows registering a callback function that automatically executes when a `std::stop_source` requests cancellation.
+- It is useful for cleanup or performing graceful shutdown tasks when cancellation occurs.
+
+### `get_token()` in C++17:
+
+- In C++20, `std::stop_source` provides the `get_token()` method to obtain a `std::stop_token`.
+- In C++17, there is no native support for `std::stop_token` or `get_token()`.
+- To emulate similar functionality, use shared control objects such as `std::shared_ptr<std::atomic<bool>>`.
+- These can be passed to and checked within threads or tasks to determine if a cancellation request has been made.
+
+### Summary:
+
+- `std::stop_callback` and `get_token()` are features of C++20.
+- In C++17, manage cancellation manually using shared flags and periodically check them within your tasks.
 
 Example usage in C++20:
 
@@ -54,20 +66,9 @@ Example usage in C++20:
   }
   ```
 
-**Note:** No `std::stop_callback` in C++17.
+Example in C++17 using a shared atomic flag:
 
-### `get_token()`:
-
-- In C++20, `std::stop_source` provides `get_token()`.
-- In C++17, no such mechanism exists.
-- The common approach in C++17 is to emulate cancellation tokens with shared control objects like `std::atomic<bool>`.
-
-To emulate, you can use a shared `std::shared_ptr<std::atomic<bool>>` acting as a manual cancellation token.
-Inside your thread or task, check the flag periodically to determine if cancellation was requested.
-
-Example:
-
-```c++
+```cpp
 #include <atomic>
 #include <thread>
 #include <iostream>
@@ -109,9 +110,4 @@ int main() {
 }
 ```
 
-### Summary:
-
-- No `get_token()` in C++17.
-- Use shared `std::shared_ptr<std::atomic<bool>>`.
-- Pass it to threads/tasks and check whether cancellation has been requested.
 
