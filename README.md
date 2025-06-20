@@ -19,9 +19,7 @@ In the TODO plan there are the following:
 4) examples an abstract context application for protocol converter f.e. IEC61850, IE60870-5-10X;
 5) examples of how to use these codes in IoT applications with Raspberry and BeagleBoard.
 
-# Important Notes for C++17
-
-## `std::stop_callback` with `get_token()` under C++17
+# Important Notes for C++11/14/17
 
 ### `std::stop_callback`:
 
@@ -29,17 +27,17 @@ In the TODO plan there are the following:
 - It allows registering a callback function that automatically executes when a `std::stop_source` requests cancellation.
 - It is useful for cleanup or performing graceful shutdown tasks when cancellation occurs.
 
-### `get_token()` in C++17:
+### `get_token()` in C++11/14/17:
 
 - In C++20, `std::stop_source` provides the `get_token()` method to obtain a `std::stop_token`.
-- In C++17, there is no native support for `std::stop_token` or `get_token()`.
+- In C++11/14/17, there is no native support for `std::stop_token` or `get_token()`.
 - To emulate similar functionality, use shared control objects such as `std::shared_ptr<std::atomic<bool>>`.
 - These can be passed to and checked within threads or tasks to determine if a cancellation request has been made.
 
 ### Summary:
 
 - `std::stop_callback` and `get_token()` are features of C++20.
-- In C++17, manage cancellation manually using shared flags and periodically check them within your tasks.
+- In C++11/14/17, manage cancellation manually using shared flags and periodically check them within your tasks.
 
 Example usage in C++20:
 
@@ -66,7 +64,7 @@ Example usage in C++20:
   }
   ```
 
-Example in C++17 using a shared atomic flag:
+Example in C++11/14/17 using a shared atomic flag:
 
 ```cpp
 #include <atomic>
@@ -109,5 +107,3 @@ int main() {
     worker.join();
 }
 ```
-
-
