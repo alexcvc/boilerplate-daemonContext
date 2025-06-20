@@ -15,16 +15,14 @@
 #include <getopt.h>
 
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <thread>
 
-#include <fmt/format.h>
-#include <spdlog/spdlog.h>
-
 #include "daemon.hpp"
-#include "daemonConfig.hpp"
+#include "daemon_config.hpp"
 #include "version.hpp"
 
 //----------------------------------------------------------------------------
@@ -72,17 +70,16 @@ static void display_help(const char* prog, char errorOption = 0) {
   }
   std::cout << "Usage: " << prog << " [OPTIONS]" << std::endl
             << "-D, --background         start as daemon" << std::endl
-            << "-F, --foreground         start in foreground with test console" << std::endl
+            << "-T, --test               start in foreground with test console" << std::endl
             << "-S, --cfgpath            path to folder with configuration files" << std::endl
             << "-x, --cfgfile            specified configuration file" << std::endl
             << "-P, --pidfile            create pid file" << std::endl
-            << "-L, --logfile            specified log file" << std::endl
             << "-v, --version            version" << std::endl
             << "-h, --help               this message" << std::endl;
   std::cout << "Sample command lines:" << std::endl;
-  std::cout << prog << " -F" << std::endl;
+  std::cout << prog << " -T" << std::endl;
   std::cout << prog << " -D -P /var/run/some.pid" << std::endl;
-  std::cout << prog << " -F -S /app/config" << std::endl;
+  std::cout << prog << " -T -S /app/config" << std::endl;
   std::cout << prog << " -D -x /app/config/settings.xml -P /var/run/some.pid" << std::endl;
 
   if (errorOption != 0) {
@@ -104,16 +101,15 @@ static void display_help(const char* prog, char errorOption = 0) {
 static void process_command_line(int argc, char* argv[], app::DaemonConfig& config) {
   for (;;) {
     int option_index = 0;
-    static const char* short_options = "h?vDFP:S:x:L:";
+    static const char* short_options = "h?vDTP:S:x:L:";
     static const struct option long_options[] = {
         {"help", no_argument, 0, 0},
         {"version", no_argument, 0, 'v'},
         {"background", no_argument, 0, 'D'},
-        {"foreground", no_argument, 0, 'F'},
+        {"test", no_argument, 0, 'T'},
         {"pidfile", required_argument, 0, 'P'},
         {"cfgpath", required_argument, 0, 'S'},
         {"cfgfile", required_argument, 0, 'x'},
-        {"logfile", required_argument, 0, 'L'},
         {0, 0, 0, 0},
     };
 
@@ -140,12 +136,12 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
 
       case 'D':
         config.isDaemon = true;
-        config.hasTestConsoleInForeground = false;
+        config.hasTestConsole = false;
         break;
 
       case 'F':
         config.isDaemon = false;
-        config.hasTestConsoleInForeground = true;
+        config.hasTestConsole = true;
         break;
 
       case 'P':
@@ -164,17 +160,9 @@ static void process_command_line(int argc, char* argv[], app::DaemonConfig& conf
         }
         break;
 
-      case 'L':
-        if (strlen(optarg)) {
-          config.logFile.assign(optarg);
-        } else {
-          display_help(argv[0], var);
-        }
-        break;
-
       case 'x':
         if (strlen(optarg)) {
-          config.configFile.assign(optarg);
+          config.pathConfigFile.assign(optarg);
         } else {
           display_help(argv[0], var);
         }
@@ -232,26 +220,26 @@ int main(int argc, char** argv) {
   // parameters have been set
   //----------------------------------------------------------
 
-  // Set the start all function
-  daemon.set_start_function([]() {
+  // Set the start-all function
+  daemon.setStartFunction([]() {
     std::cout << "Start all function called." << std::endl;
     return true;
   });
 
-  // Set the stop all all function
-  daemon.set_close_function([]() {
+  // Set the stop all function
+  daemon.setCloseFunction([]() {
     std::cout << "Close all function called." << std::endl;
     return true;
   });
 
   // Set the reload function to be called in case of receiving a SIGHUP signal
-  daemon.set_reload_function([]() {
+  daemon.setReloadFunction([]() {
     std::cout << "Reload function called." << std::endl;
     return true;
   });
 
   // Start all
-  if (auto result = daemon.start_all(); result.has_value() && !result.value()) {
+  if (auto result = daemon.startAll(); result.has_value() && !result.value()) {
     std::cerr << "Error starting the daemon." << std::endl;
     return EXIT_FAILURE;
   }
@@ -259,32 +247,32 @@ int main(int argc, char** argv) {
   // Start all
 
   if (config.isDaemon) {
-    if (auto result = daemon.make_daemon(config.pidFile); result.has_value() && !result.value()) {
+    if (auto result = daemon.makeDaemon(config.pidFile); result.has_value() && !result.value()) {
       std::cerr << "Error starting the daemon." << std::endl;
       return EXIT_FAILURE;
     }
   }
 
-  if (config.hasTestConsoleInForeground) {
+  if (config.hasTestConsole) {
     std::cout << "Press the h key to display the Console Menu..." << std::endl;
   }
 
   // Daemon main loop
-  while (daemon.is_running()) {
-    if (config.hasTestConsoleInForeground) {
+  while (daemon.isRunning()) {
+    if (config.hasTestConsole) {
       auto result = handle_console();
       switch (result) {
         case handleConsoleType::exit:
-          daemon.set_state(app::Daemon::State::stop);
+          daemon.setState(app::Daemon::State::Stop);
           break;
         case handleConsoleType::abort:
-          daemon.set_state(app::Daemon::State::stop);
+          daemon.setState(app::Daemon::State::Stop);
           break;
         case handleConsoleType::restart:
-          daemon.set_state(app::Daemon::State::reload);
+          daemon.setState(app::Daemon::State::Reload);
           break;
         case handleConsoleType::reload:
-          daemon.set_state(app::Daemon::State::reload);
+          daemon.setState(app::Daemon::State::Reload);
           break;
         default:
           break;
@@ -294,7 +282,7 @@ int main(int argc, char** argv) {
     }
   }
 
-  if (auto result = daemon.close_all(); result.has_value() && !result.value()) {
+  if (auto result = daemon.closeAll(); result.has_value() && !result.value()) {
     std::cerr << "Error closing the daemon." << std::endl;
     return EXIT_FAILURE;
   }

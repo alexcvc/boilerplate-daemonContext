@@ -1,12 +1,3 @@
-/* SPDX-License-Identifier: MIT */
-//
-// Copyright (c) 2024 Alexander Sacharov <a.sacharov@gmx.de>
-//               All rights reserved.
-//
-// This work is licensed under the terms of the MIT license.
-// For a copy, see <https://opensource.org/licenses/MIT>.
-//
-
 /**
 * \file
  * \brief   contains the application context class
@@ -19,25 +10,30 @@
 #include <filesystem>
 #include <mutex>
 
-#include "appContextBase.hpp"
+#include "app_context_base.hpp"
 
 namespace app {
+
+/**
+ * @brief The UdpAddress type represents a UDP address in case of IEC61850-90-5.
+ */
+using UdpAddress = std::pair<std::string, uint16_t>;
 
 /**
  * @brief The AppContext class provides implementation application context functions.
  */
 class AppContext : public IAppContext {
-  // Private Variables
-  std::filesystem::path m_pathConfigFile;    ///< The path of the configuration file
-  std::filesystem::path m_pathConfigFolder;  ///< The path of the configuration folder
-  std::filesystem::path m_pathLogFile;       ///< The path of the log file
+  static constexpr std::string_view kDefaultConfigFile{"settings.xml"};  ///< The name of the XML configuration file
+  std::filesystem::path m_pathConfigFile;                                ///< The path of the configuration file
+  std::filesystem::path m_pathConfigFolder;                              ///< The path of the configuration folder
+  std::mutex m_mutex;  ///< The mutex for the context start-restart-stop
 
  public:
   /// constructor
   AppContext() = default;
 
   /// destructor
-  virtual ~AppContext() = default;
+  ~AppContext() override = default;
 
   /**
    * @brief Validates the configuration of the daemon.
@@ -90,16 +86,21 @@ class AppContext : public IAppContext {
   /**
    * @brief processing the context.
    * @param min_duration minimum duration until next processing.
-   * @return The earlier timeout until next process.
+   * @return The earlier timeout until the next process.
    */
   [[nodiscard]] std::chrono::milliseconds process_executing(const std::chrono::milliseconds& min_duration) override;
 
   /**
    * @brief Set the path of the configuration file.
    * @param path The path of the configuration file.
+   * @param isMandatory
    * @return true if the path exists or empty, otherwise false.
    */
-  [[nodiscard]] bool validate_path(const std::string& path, const std::string& desc) const;
+  [[nodiscard]] bool validate_path(const std::string& path, const std::string& desc, bool isMandatory) const;
+
+  [[nodiscard]] const std::filesystem::path& getPathConfigFolder() const {
+    return m_pathConfigFolder;
+  }
 };
 
 }  // namespace app

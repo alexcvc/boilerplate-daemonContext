@@ -3,25 +3,26 @@
  * @brief   Provides application version-info
  *****************************************************************************/
 #include "version.hpp"
-
-#include <fmt/format.h>
+#include <sstream> // For std::ostringstream
 
 std::string version::@PROJECT_NAME@::getVersion(bool withGitHash) {
-  auto outstr{fmt::format("{:d}.{:d}.{:d}", _major, _minor, _patch)};
+    std::ostringstream outstr;
+    outstr << _major << "." << _minor << "." << _patch;
 
-  if (_tweak > 0)
-    outstr.append(fmt::format(".{:d}", _tweak));
+    if (_tweak > 0)
+        outstr << "." << _tweak;
 
-  if (withGitHash && !_git_hash.empty())
-    outstr.append(fmt::format("-{}", _git_hash));
+    if (withGitHash && !_git_hash.empty())
+        outstr << "-" << _git_hash;
 
-  return outstr;
+    return outstr.str();
 }
 
 std::string version::@PROJECT_NAME@::getHeader(bool withGitHash) {
-  return fmt::format(
-      "Package   : {} {}\n"
-      "Version   : {} {}\n"
-      "Brief     : {}",
-      _name, _desc, getVersion(withGitHash), _git_date, _summary);
+    std::ostringstream header;
+    header << "Package   : " << _name << " " << _desc << "\n"
+           << "Version   : " << getVersion(withGitHash) << " " << _git_date << "\n"
+           << "Brief     : " << _summary;
+
+    return header.str();
 }

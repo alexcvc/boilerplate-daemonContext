@@ -13,20 +13,13 @@ project(${TargetName}
 ### set readable summary for this version
 set(PROJECT_VERSION_DESCRIPTION "Example, how to use daemon boilerplate")
 
-find_package(Threads REQUIRED)
-find_package(spdlog REQUIRED)
-find_package(fmt REQUIRED)
-
 ### List of CPP (source) library files.
 set(${TargetName}_SRC
-   "src/daemon.cpp"
-   "src/main.cpp"
+   "main.cpp"
 )
 
 ### List of HPP (header) library files.
 set(${TargetName}_HDR
-   "include/daemon.hpp"
-   "include/daemonConfig.hpp"
 )
 
 # Make a version file containing the hash and date from git.
@@ -42,14 +35,11 @@ add_executable(${TargetName}
 )
 
 target_include_directories(${TargetName} PRIVATE
-   ${SPDLOG_HEADERS_DIR}
-   ${FMT_HEADERS_DIR}
    ${CMAKE_CURRENT_BINARY_DIR}
-   "include"
+   ${CMAKE_SOURCE_DIR}/lib/include
 )
 
-find_package(fmt)
-target_link_libraries(${TargetName} PRIVATE fmt::fmt-header-only spdlog::spdlog_header_only Threads::Threads)
+target_link_libraries(${TargetName} PRIVATE daemon)
 
 # post build copy optional
 if ((NOT ${CMAKE_POSTBUILD_OUTPUT_DIRECTORY}) AND (IS_DIRECTORY ${CMAKE_POSTBUILD_OUTPUT_DIRECTORY}))

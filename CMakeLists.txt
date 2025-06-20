@@ -33,7 +33,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}"
 # Disable C and C++ compiler extensions.
 set(CMAKE_C_EXTENSIONS OFF)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_C_STANDARD 17)
+set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -46,7 +46,7 @@ find_package(Threads REQUIRED)
 
 # Build debug-configuration by default
 if (NOT CMAKE_BUILD_TYPE)
-   set(CMAKE_BUILD_TYPE Debug)
+  set(CMAKE_BUILD_TYPE Debug)
 endif ()
 
 # Strip everything
@@ -79,20 +79,23 @@ configure_file("${CMAKE_SOURCE_DIR}/.cmake/version.hpp.in" "${CMAKE_BINARY_DIR}/
 #######################################################
 
 ### submodules
-set(SPDLOG_FMT_EXTERNAL_HO TRUE)
-set(SPDLOG_BUILD_SHARED TRUE)
+#set(SPDLOG_FMT_EXTERNAL_HO TRUE)
+#set(SPDLOG_BUILD_SHARED TRUE)
 
-add_subdirectory(submodules)
+#add_subdirectory(submodules)
+
+### library and include files.
+add_subdirectory(lib)
 
 ### application.
 add_subdirectory(src)
 
 # Check if we need to build the tests
 if (BUILD_TEST)
-   add_subdirectory(test)
+  add_subdirectory(test)
 endif ()
 
 # Add targets related to doxygen documentation generation
 if (BUILD_DOC)
-   add_subdirectory(docs)
+  add_subdirectory(docs)
 endif ()

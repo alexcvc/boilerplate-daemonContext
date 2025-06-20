@@ -1,21 +1,33 @@
 /* SPDX-License-Identifier: MIT */
 //
-// Copyright (c) 2024 Alexander Sacharov <a.sacharov@gmx.de>
+// Copyright (c) 2025 Alexander Sacharov <a.sacharov@gmx.de>
 //               All rights reserved.
 //
 // This work is licensed under the terms of the MIT license.
 // For a copy, see <https://opensource.org/licenses/MIT>.
 //
 
-#include "appContext.hpp"
+/**
+ * @file
+ * @brief Implementation of the AppContext class.
+ *
+ * This file contains the implementation of the AppContext class. The AppContext
+ * class is responsible for managing the application context of the daemon. It
+ * provides methods for validating the configuration, processing the reconfiguration,
+ * starting the application context, restarting the application context, shutting
+ * down the application context, and executing the application context.
+ */
 
+// clang-format off
 #include <chrono>
 #include <fstream>
 #include <iostream>
-#include <regex>
-#include <thread>
-#include <filesystem>
-#include <spdlog/spdlog.h>
+#include "include/app_context.hpp"
+
+#include <atomic>
+
+#include "app_utilities.hpp"
+// clang-format on
 
 //-----------------------------------------------------------------------------
 // includes
@@ -29,11 +41,14 @@
 // Typedefs, enums, unions, variables
 //----------------------------------------------------------------------------
 
+// legacy indication about complete operation in threads
+std::atomic_bool isRunningNow{true};
+
 //----------------------------------------------------------------------------
 // Declarations
 //----------------------------------------------------------------------------
 
-//----------------------------------------------------------------------------
+//----------------------------------------------------------------------------{]}
 // Definitions
 //----------------------------------------------------------------------------
 
@@ -46,17 +61,19 @@
  *
  * @param path The path of the error file.
  * @param desc The error message to be written to the file.
+ * @param isMandatory
  * @return The success status of the operation. Returns true if the error file was incremented successfully
  *         or already exists, false otherwise.
  ******************************************************************************/
-bool app::AppContext::validate_path(const std::string& path, const std::string& desc) const {
-  spdlog::info("Validating path: {}", path);
-
+bool app::AppContext::validate_path(const std::string& path, const std::string& desc, bool isMandatory) const {
   if (!path.empty()) {
     if (!std::filesystem::exists(path)) {
-      spdlog::error("{} \"{}\" doesn't exist", desc, path);
+      std::cerr << desc << " \"" << path << "\" doesn't exist" << std::endl;
       return false;
     }
+  } else if (isMandatory) {
+    std::cerr << desc << " \"" << path << "\" is mandatory but not defined" << std::endl;
+    return false;
   }
   return true;
 }
@@ -73,29 +90,25 @@ bool app::AppContext::validate_path(const std::string& path, const std::string& 
 std::optional<bool> app::AppContext::validate_configuration(const app::DaemonConfig& config) {
   int errorCount{0};
 
-  spdlog::info("Validating the configuration");
+  std::cout << "Application context: Validating the configuration" << std::endl;
 
   m_pathConfigFile = config.pathConfigFile;
   m_pathConfigFolder = config.pathConfigFolder;
-  m_pathLogFile = config.logFile;
 
   /*
    * Use the validatePath function to validate all paths.
    */
-  if (!validate_path(m_pathConfigFolder, "Configuration Folder")) {
+  if (!validate_path(m_pathConfigFolder, "Configuration Folder", false)) {
+    errorCount++;
+  }
+  if (!validate_path(m_pathConfigFile, "XML Configuration", false)) {
     errorCount++;
   }
 
-  if (!validate_path(m_pathConfigFile, "Configuration file")) {
-    errorCount++;
-  }
-
-  if (!validate_path(m_pathLogFile, "Log File")) {
-    errorCount++;
-  }
-
-  if (errorCount > 0)
+  // if there are errors, return false
+  if (errorCount > 0) {
     return false;
+  }
 
   return true;
 }
@@ -115,8 +128,8 @@ std::optional<bool> app::AppContext::validate_configuration(const app::DaemonCon
 * process, the method returns an empty optional.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_reconfigure() {
-  spdlog::info("Reconfiguring the application");
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::cout << "Application context: Reconfiguring the application" << std::endl;
+  // reload logging configuration from XML
   return true;
 }
 
@@ -126,8 +139,7 @@ std::optional<bool> app::AppContext::process_reconfigure() {
  *         Returns std::nullopt if failed, otherwise returns true.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_restart() {
-  spdlog::info("Restarting the application");
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::cout << "Application context: Restarting the application" << std::endl;
   return true;
 }
 
@@ -137,8 +149,7 @@ std::optional<bool> app::AppContext::process_restart() {
  *         Returns std::nullopt if failed, otherwise returns true.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_user1() {
-  spdlog::info("Processing USER1 signal");
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::cout << "Application context: get and process the USER1 signal" << std::endl;
   return true;
 }
 
@@ -148,19 +159,47 @@ std::optional<bool> app::AppContext::process_user1() {
  *         Returns std::nullopt if failed, otherwise returns true.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_user2() {
-  spdlog::info("Processing USER2 signal");
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::cout << "Application context: get and process the USER2 signal" << std::endl;
   return true;
 }
 
 /*************************************************************************/ /**
  * \brief Process the start of the application context.
+ *
+ * This function sets up the necessary configurations and starts the stack
+ * library with all subservices. It registers GOMSFE for all supported
+ * versions, configures RFC1006 parameters from a file, initializes the
+ * SCL configuration, adds GOOSE and R-GOOSE adapters/addresses,
+ * sets up file services
+ *
  * \return An optional boolean value indicating if the process start was successful.
  *         Returns std::nullopt if failed, otherwise returns true.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_start() {
-  spdlog::info("Starting the application");
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  // lock stack context
+  std::unique_lock lock(m_mutex);
+
+  // check configuration and set settings.xml
+  if (m_pathConfigFile.empty()) {
+    m_pathConfigFile = m_pathConfigFolder / kDefaultConfigFile;
+  }
+
+  //-------------------------------------
+  // Start event scheduler
+  //-------------------------------------
+
+  //-------------------------------------
+  // Initialization of process image
+  //-------------------------------------
+
+  // ----------------------------------------------------------
+  // Once at startup
+  // ----------------------------------------------------------
+
+  // ----------------------------------------------------------
+  // start managing scheduled events, including control timeouts
+  // ----------------------------------------------------------
+
   return true;
 }
 
@@ -170,8 +209,21 @@ std::optional<bool> app::AppContext::process_start() {
  *         The optional value will be empty if the shutdown process encountered an error.
  ******************************************************************************/
 std::optional<bool> app::AppContext::process_shutdown() {
-  spdlog::info("Shutting down the application");
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  std::cout << "Application context: Shutting down the application" << std::endl;
+  // lock stack context
+  std::scoped_lock lock(m_mutex);
+
+  // exit from the thread loops - legacy method.
+  isRunningNow.store(false, std::memory_order_release);
+
+  // ----------------------------------------------------------
+  // terminate the scheduled events and destroy scheduler
+  // ----------------------------------------------------------
+
+  //------------------------------------
+  // destroy task scheduler
+  //------------------------------------
+
   return true;
 }
 
@@ -181,7 +233,5 @@ std::optional<bool> app::AppContext::process_shutdown() {
  * @return The earlier timeout until next process.
  ******************************************************************************/
 std::chrono::milliseconds app::AppContext::process_executing(const std::chrono::milliseconds& min_duration) {
-  spdlog::info("Processing the context. Minimal duration: {} ms", min_duration.count());
-  return min_duration > std::chrono::milliseconds(5000) ? std::chrono::milliseconds(1000)
-                                                        : min_duration + std::chrono::milliseconds(1000);
+  return min_duration;
 }

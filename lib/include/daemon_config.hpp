@@ -1,11 +1,17 @@
 /* SPDX-License-Identifier: MIT */
 //
-// Copyright (c) 2024 Alexander Sacharov <a.sacharov@gmx.de>
+// Copyright (c) 2025 Alexander Sacharov <a.sacharov@gmx.de>
 //               All rights reserved.
 //
 // This work is licensed under the terms of the MIT license.
 // For a copy, see <https://opensource.org/licenses/MIT>.
 //
+
+/**
+ * @file
+ * @brief   Contains the configuration for a daemon process.
+ * @ingroup
+ */
 
 #pragma once
 
@@ -27,6 +33,5 @@ struct DaemonConfig {
   bool hasTestConsole{false};    ///< Whether there is a test console running in the foreground
   std::string pathConfigFile;    ///< The path of the configuration file
   std::string pathConfigFolder;  ///< The path of the configuration folder
-  std::string logFile;           ///< The path of the log file
 };
 }  // namespace app

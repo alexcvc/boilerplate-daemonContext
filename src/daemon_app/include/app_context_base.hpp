@@ -1,12 +1,3 @@
-/* SPDX-License-Identifier: MIT */
-//
-// Copyright (c) 2024 Alexander Sacharov <a.sacharov@gmx.de>
-//               All rights reserved.
-//
-// This work is licensed under the terms of the MIT license.
-// For a copy, see <https://opensource.org/licenses/MIT>.
-//
-
 /**
  * \file
  * \brief   contains the application context class
@@ -16,7 +7,7 @@
 #pragma once
 #include <optional>
 
-#include "daemonConfig.hpp"
+#include "../../../lib/include/daemon_config.hpp"
 
 //-----------------------------------------------------------------------------
 // includes
@@ -119,7 +110,7 @@ class IAppContext {
   /**
    * @brief processing the context.
    * @param min_duration minimum duration until next processing.
-   * @return The earlier timeout until next process.
+   * @return The earlier timeout until the next process.
    */
   [[nodiscard]] virtual std::chrono::milliseconds process_executing(const std::chrono::milliseconds& min_duration) = 0;
   [[nodiscard]] static std::chrono::milliseconds process_executing(IAppContext& self,
